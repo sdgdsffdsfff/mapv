@@ -41,7 +41,7 @@ var util = {
             if (source.hasOwnProperty(i)) {
                 if (util.isPlainObject(source[i])) {
                     destination[i] = (toStr.call(source[i]) === astr) ? [] : {};
-                    arguments.callee(destination[i], source[i]);
+                    util.extend(destination[i], source[i]);
                     destination[i] = source[i];
                 } else {
                     destination[i] = source[i];
@@ -121,7 +121,18 @@ var util = {
             maxY = Math.max(maxY, geo[i][1]);
         }
         return [minX + (maxX - minX) / 2, minY + (maxY - minY) / 2];
+    },
+
+    // 获取Device的Pixel Ratio
+    getPixelRatio: function(context) {
+        var backingStore = context.backingStorePixelRatio ||
+                            context.webkitBackingStorePixelRatio ||
+                            context.mozBackingStorePixelRatio ||
+                            context.msBackingStorePixelRatio ||
+                            context.oBackingStorePixelRatio ||
+                            context.backingStorePixelRatio || 1;
+
+        return (window.devicePixelRatio || 1) / backingStore;
     }
 
-
-}
+};

@@ -1,8 +1,16 @@
 !function(){
-    var Mapv;
+"use strict";
 
-;var util = {
-    isPlainObject: function (obj) {
+var Mapv;
+/**
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ * 一些常用的方法库
+ */
+
+'use strict';
+
+var util = {
+    isPlainObject: function isPlainObject(obj) {
         var key;
         var class2type = {};
         var hasOwn = class2type.hasOwnProperty;
@@ -30,7 +38,7 @@
     /**
      * 深度扩展一个对象
      */
-    extend: function (destination, source) {
+    extend: function extend(destination, source) {
         var i,
             toStr = Object.prototype.toString,
             astr = '[object Array]';
@@ -38,8 +46,8 @@
         for (i in source) {
             if (source.hasOwnProperty(i)) {
                 if (util.isPlainObject(source[i])) {
-                    destination[i] = (toStr.call(source[i]) === astr) ? [] : {};
-                    arguments.callee(destination[i], source[i]);
+                    destination[i] = toStr.call(source[i]) === astr ? [] : {};
+                    util.extend(destination[i], source[i]);
                     destination[i] = source[i];
                 } else {
                     destination[i] = source[i];
@@ -54,7 +62,7 @@
      * @param {Object} obj the obj
      * @return {Object} new object
      */
-    copy: function (obj) {
+    copy: function copy(obj) {
         return this.extend({}, obj);
     },
     /**
@@ -72,7 +80,7 @@
      * @shortcut inherits
      * @meta standard
      */
-    inherits: function (subClass, superClass) {
+    inherits: function inherits(subClass, superClass) {
         var key;
         var proto;
         var selfProps = subClass.prototype;
@@ -87,13 +95,15 @@
     },
 
     // 在页面中添加样式
-    addCssByStyle: function (cssString) {
+    addCssByStyle: function addCssByStyle(cssString) {
         var doc = document;
         var style = doc.createElement('style');
         style.setAttribute('type', 'text/css');
-        if (style.styleSheet) { // IE
+        if (style.styleSheet) {
+            // IE
             style.styleSheet.cssText = cssString;
-        } else { // w3c
+        } else {
+            // w3c
             var cssText = doc.createTextNode(cssString);
             style.appendChild(cssText);
         }
@@ -107,7 +117,7 @@
     },
 
     // 获取坐标的中心点
-    getGeoCenter: function (geo) {
+    getGeoCenter: function getGeoCenter(geo) {
         var minX = geo[0][0];
         var minY = geo[0][1];
         var maxX = geo[0][0];
@@ -119,12 +129,24 @@
             maxY = Math.max(maxY, geo[i][1]);
         }
         return [minX + (maxX - minX) / 2, minY + (maxY - minY) / 2];
+    },
+
+    // 获取Device的Pixel Ratio
+    getPixelRatio: function getPixelRatio(context) {
+        var backingStore = context.backingStorePixelRatio || context.webkitBackingStorePixelRatio || context.mozBackingStorePixelRatio || context.msBackingStorePixelRatio || context.oBackingStorePixelRatio || context.backingStorePixelRatio || 1;
+
+        return (window.devicePixelRatio || 1) / backingStore;
     }
 
+};
+/**
+ * @file MVC架构
+ *
+ */
+'use strict';
 
-}
-;var MVCObject;
-(function() {
+var MVCObject;
+(function () {
 
     function Accessor(target, targetKey) {
         var self = this;
@@ -132,15 +154,15 @@
         self.targetKey = targetKey;
     }
 
-    Accessor.prototype.transform = function(from, to) {
+    Accessor.prototype.transform = function (from, to) {
         var self = this;
         self.from = from;
         self.to = to;
         self.target.notify(self.targetKey);
         return self;
-    }
+    };
 
-    MVCObject = (function() {
+    MVCObject = (function () {
 
         var getterNameCache = {};
         var setterNameCache = {};
@@ -220,7 +242,7 @@
          * @param {String} key 关键值
          * @return {mixed} 对应的值
          */
-        proto.get = function(key) {
+        proto.get = function (key) {
             var self = this;
             if (self[accessors] && self[accessors].hasOwnProperty(key)) {
                 var accessor = self[accessors][key];
@@ -249,7 +271,7 @@
          * @param {all} value 要给key设定的值,可以是所有类型
          * @return {this}
          */
-        proto.set = function(key, value) {
+        proto.set = function (key, value) {
             var self = this;
             if (self[accessors] && self[accessors].hasOwnProperty(key)) {
                 var accessor = self[accessors][key];
@@ -274,14 +296,14 @@
         /**
          * @description 没个MVCObject对象各自的响应对应的key值变化时的逻辑
          */
-        proto.changed = function() {};
+        proto.changed = function () {};
 
         /**
          * @description 手动触发对应key的事件传播
          * @param {String} key 关键值
          * @return {this}
          */
-        proto.notify = function(key) {
+        proto.notify = function (key) {
             var self = this;
             if (self[accessors] && self[accessors].hasOwnProperty(key)) {
                 var accessor = self[accessors][key];
@@ -294,7 +316,7 @@
             return self;
         };
 
-        proto.setValues = function(values) {
+        proto.setValues = function (values) {
             var self = this;
             var key, setterName, value;
             for (key in values) {
@@ -321,7 +343,7 @@
          * @param noNotify {Boolean}
          * @return {Accessor}
          */
-        proto.bindTo = function(key, target, targetKey, noNotify) {
+        proto.bindTo = function (key, target, targetKey, noNotify) {
             targetKey || (targetKey = key);
 
             var self = this;
@@ -349,7 +371,7 @@
          * @param {String} key 关键字
          * @return {this}
          */
-        proto.unbind = function(key) {
+        proto.unbind = function (key) {
             var self = this;
             if (self[accessors]) {
                 var accessor = self[accessors][key];
@@ -362,9 +384,9 @@
                 }
             }
             return self;
-        }
+        };
 
-        proto.unbindAll = function() {
+        proto.unbindAll = function () {
             var self = this;
             if (self[accessors]) {
                 var ref = self[accessors];
@@ -377,36 +399,37 @@
             return self;
         };
 
-        proto.initOptions = function(options) {
-
+        proto.initOptions = function (options) {
             for (var key in options) {
-
-                this[getGetterName(key)] = (function(key) {
+                this[getGetterName(key)] = (function (key) {
                     return function () {
                         return this.get(key);
-                    }
+                    };
                 })(key);
 
-                this[getSetterName(key)] = (function(key) {
+                this[getSetterName(key)] = (function (key) {
                     return function (value) {
                         this.set(key, value);
-                    }
+                    };
                 })(key);
 
                 this[toKey(key)] = options[key];
-
             }
-
-        }
+        };
 
         return MVCObject;
-
     })();
-
 })();
 
 Mapv.MVCObject = MVCObject;
-;function Class () {
+/**
+ * base Class
+ *
+ */
+
+"use strict";
+
+function Class() {
     this.__listeners = {}; // 存储自定义事件对象
 }
 
@@ -424,8 +447,7 @@ Class.prototype.addEventListener = function (type, handler) {
     this.__listeners[type].push(handler);
 
     return this;
-}
-
+};
 
 /**
  * 移除对象的事件监听器。
@@ -470,24 +492,28 @@ Class.prototype.dispatchEvent = function (type, options) {
     }
 
     return this;
-    
-}
+};
 
-Class.prototype.dispose = function () {
-}
+Class.prototype.dispose = function () {};
+/**
+ * @file  控制值域的类
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ */
 
-;function DataRange(layer) {
+'use strict';
+
+function DataRange(layer) {
     Class.call(this);
 
     this.initOptions({
         min: 0,
-        max: 0,
+        max: 0
     });
 
     this.set('layer', layer);
-    this.bindTo('data', layer)
-    this.bindTo('drawOptions', layer)
-    this.bindTo('drawType', layer)
+    this.bindTo('data', layer);
+    this.bindTo('drawOptions', layer);
+    this.bindTo('drawType', layer);
 
     var me = this;
 }
@@ -502,28 +528,15 @@ util.extend(DataRange.prototype, {
         '0.8': 'yellow',
         '1.0': 'red'
     },
-    colors: [
-        'rgba(17, 102, 252, 0.8)',
-        'rgba(52, 139, 251, 0.8)',
-        'rgba(110, 176, 253, 0.8)',
-        'rgba(255, 241, 193, 0.8)',
-        'rgba(255, 146, 149, 0.8)',
-        'rgba(253, 98, 104, 0.8)',
-        'rgba(255, 0, 0, 0.8)',
-        'rgba(255, 51, 61, 0.8)'
-    ],
+    colors: ['rgba(17, 102, 252, 0.8)', 'rgba(52, 139, 251, 0.8)', 'rgba(110, 176, 253, 0.8)', 'rgba(255, 241, 193, 0.8)', 'rgba(255, 146, 149, 0.8)', 'rgba(253, 98, 104, 0.8)', 'rgba(255, 0, 0, 0.8)', 'rgba(255, 51, 61, 0.8)'],
 
     // 根据count值获取对应的大小，在bubble绘制中用到
-    getSize: function (count) {
+    getSize: function getSize(count) {
         var size = 1;
         var splitList = this.splitList;
 
         for (var i = 0; i < splitList.length; i++) {
-            if ((splitList[i].start === undefined
-            || splitList[i].start !== undefined
-            && count >= splitList[i].start)
-            && (splitList[i].end === undefined
-            || splitList[i].end !== undefined && count < splitList[i].end)) {
+            if ((splitList[i].start === undefined || splitList[i].start !== undefined && count >= splitList[i].start) && (splitList[i].end === undefined || splitList[i].end !== undefined && count < splitList[i].end)) {
                 size = splitList[i].size;
                 break;
             }
@@ -533,16 +546,12 @@ util.extend(DataRange.prototype, {
     },
 
     // 根据count值获取对应的颜色，在choropleth中使用
-    getColorByRange: function (count) {
+    getColorByRange: function getColorByRange(count) {
         var color = 'rgba(50, 50, 255, 1)';
         var splitList = this.splitList;
 
         for (var i = 0; i < splitList.length; i++) {
-            if ((splitList[i].start === undefined
-            || splitList[i].start !== undefined
-            && count >= splitList[i].start)
-            && (splitList[i].end === undefined
-            || splitList[i].end !== undefined && count < splitList[i].end)) {
+            if ((splitList[i].start === undefined || splitList[i].start !== undefined && count >= splitList[i].start) && (splitList[i].end === undefined || splitList[i].end !== undefined && count < splitList[i].end)) {
                 color = splitList[i].color;
                 break;
             }
@@ -551,7 +560,7 @@ util.extend(DataRange.prototype, {
         return color;
     },
 
-    data_changed: function () {
+    data_changed: function data_changed() {
         var data = this.get('data');
         if (data && data.length > 0) {
             this._min = data[0].count;
@@ -563,20 +572,19 @@ util.extend(DataRange.prototype, {
         }
     },
 
-    drawType_changed: function () {
+    drawType_changed: function drawType_changed() {
         this.update();
     },
 
-    drawOptions_changed: function () {
+    drawOptions_changed: function drawOptions_changed() {
         this.update();
     },
 
-    update: function () {
+    update: function update() {
 
         var drawOptions = this.get("drawOptions");
         if (drawOptions && drawOptions.splitList) {
             this.splitList = drawOptions.splitList;
-
         } else {
             this.generalSplitList();
         }
@@ -596,7 +604,7 @@ util.extend(DataRange.prototype, {
         this.draw();
     },
 
-    draw: function () {
+    draw: function draw() {
 
         if (this.get("layer").getDataRangeControl()) {
             this.get("layer").dataRangeControl.show();
@@ -611,10 +619,9 @@ util.extend(DataRange.prototype, {
         } else {
             this.get("layer").dataRangeControl.hide();
         }
-
     },
 
-    generalSplitList: function () {
+    generalSplitList: function generalSplitList() {
         var splitNum = Math.ceil((this._max - this._min) / 7);
         var index = this._min;
         this.splitList = [];
@@ -631,14 +638,8 @@ util.extend(DataRange.prototype, {
         }
     },
 
-    generalCategorySplitList: function () {
-        var colors = ['rgba(255, 255, 0, 0.8)',
-            'rgba(253, 98, 104, 0.8)',
-            'rgba(255, 146, 149, 0.8)',
-            'rgba(255, 241, 193, 0.8)',
-            'rgba(110, 176, 253, 0.8)',
-            'rgba(52, 139, 251, 0.8)',
-            'rgba(17, 102, 252, 0.8)'];
+    generalCategorySplitList: function generalCategorySplitList() {
+        var colors = ['rgba(255, 255, 0, 0.8)', 'rgba(253, 98, 104, 0.8)', 'rgba(255, 146, 149, 0.8)', 'rgba(255, 241, 193, 0.8)', 'rgba(110, 176, 253, 0.8)', 'rgba(52, 139, 251, 0.8)', 'rgba(17, 102, 252, 0.8)'];
         var data = this.get("data");
         this.categorySplitList = {};
         var count = 0;
@@ -655,7 +656,7 @@ util.extend(DataRange.prototype, {
         this.categorySplitList['other'] = colors[colors.length - 1];
     },
 
-    getCategoryColor: function (count) {
+    getCategoryColor: function getCategoryColor(count) {
         var splitList = this.categorySplitList;
 
         var color = splitList['other'];
@@ -670,7 +671,7 @@ util.extend(DataRange.prototype, {
         return color;
     },
 
-    generalGradient: function (grad) {
+    generalGradient: function generalGradient(grad) {
         // create a 256x1 gradient that we'll use to turn a grayscale heatmap into a colored one
         var canvas = document.createElement('canvas');
         var ctx = canvas.getContext('2d');
@@ -689,11 +690,11 @@ util.extend(DataRange.prototype, {
         this._grad = ctx.getImageData(0, 0, 1, 256).data;
     },
 
-    getGradient: function () {
+    getGradient: function getGradient() {
         return this._grad;
     },
 
-    getColorByGradient: function (count) {
+    getColorByGradient: function getColorByGradient(count) {
         var max = this.get("max") || 10;
 
         var index = count / max;
@@ -704,24 +705,228 @@ util.extend(DataRange.prototype, {
         index = parseInt(index, 10);
         index *= 4;
 
-        var color = 'rgba(' + this._grad[index] + ', ' + this._grad[index + 1] + ', ' + this._grad[index + 2] + ',' + this._grad[index + 3] +')';
+        var color = 'rgba(' + this._grad[index] + ', ' + this._grad[index + 1] + ', ' + this._grad[index + 2] + ',' + this._grad[index + 3] + ')';
         return color;
     }
 
 }); // end extend
-;function SizeDataRange() {
+/**
+ * @file Animation.js
+ */
+'use strict';
+
+function Animation(opts) {
+    var defaultOptions = {
+        duration: 1000, // 动画时长, 单位毫秒
+        fps: 30, // 每秒帧数
+        delay: 0, // 延迟执行时间，单位毫秒,如果delay为infinite则表示手动执行
+        transition: Transitions.linear,
+        onStop: function onStop() {} // 调用stop停止时的回调函数
+    };
+    // 需要后续执行动画
+    this._anis = [];
+
+    if (opts) {
+        for (var i in opts) {
+            defaultOptions[i] = opts[i];
+        }
+    }
+    this._opts = defaultOptions;
+
+    if (isNumber(defaultOptions.delay)) {
+        var me = this;
+        setTimeout(function () {
+            me.start();
+        }, defaultOptions.delay);
+    } else if (defaultOptions.delay != Animation.INFINITE) {
+        this.start();
+    }
+}
+/**
+ * 常量，表示动画无限循环
+ */
+Animation.INFINITE = "INFINITE";
+/**
+ * 启动动画方法
+ */
+Animation.prototype.start = function () {
+    this._beginTime = getCurrentTime();
+    this._endTime = this._beginTime + this._opts.duration;
+    this._launch();
+};
+Animation.prototype.add = function (ani) {
+    this._anis.push(ani);
+};
+Animation.prototype._launch = function () {
+    var me = this;
+    var now = getCurrentTime();
+
+    if (now >= me._endTime) {
+        if (me._opts.render) me._opts.render(me._opts.transition(1));
+        // finish()接口，时间线结束时对应的操作
+        if (me._opts.finish) me._opts.finish();
+        // 开始后续动画
+        if (me._anis.length > 0) {
+            var newAni = me._anis[0];
+            newAni._anis = [].concat(me._anis.slice(1));
+            newAni.start();
+        }
+        return;
+    }
+
+    me.schedule = me._opts.transition((now - me._beginTime) / me._opts.duration);
+    // render()接口，用来实现每个脉冲所要实现的效果
+    if (me._opts.render) me._opts.render(me.schedule);
+    // 执行下一个动作
+    if (!me.terminative) {
+        me._timer = setTimeout(function () {
+            me._launch();
+        }, 1000 / me._opts.fps);
+    }
+};
+
+/**
+ * 停止当前动画
+ * @type {Boolean 是否停止到动画的终止时刻}
+ */
+Animation.prototype.stop = function (gotoEnd) {
+    this.terminative = true;
+    for (var i = 0; i < this._anis.length; i++) {
+        this._anis[i].stop();
+        this._anis[i] = null;
+    }
+    this._anis.length = 0;
+    if (this._timer) {
+        clearTimeout(this._timer);
+        this._timer = null;
+    }
+    this._opts.onStop(this.schedule);
+    if (gotoEnd) {
+        this._endTime = this._beginTime;
+        this._launch();
+    }
+};
+
+/**
+ * 取消动画
+ */
+Animation.prototype.cancel = function () {
+    if (this._timer) clearTimeout(this._timer);
+    this._endTime = this._beginTime;
+    this.schedule = 0;
+};
+/**
+ * 设置动画结束后的回调函数
+ * @param Function
+ */
+Animation.prototype.setFinishCallback = function (callback) {
+    if (this._anis.length > 0) {
+        this._anis[this._anis.length - 1]._opts.finish = callback;
+    } else {
+        this._opts.finish = callback;
+    }
+};
+/**
+ * 变换效果函数库
+ */
+var Transitions = {
+    linear: function linear(t) {
+        return t;
+    },
+    reverse: function reverse(t) {
+        return 1 - t;
+    },
+    easeInQuad: function easeInQuad(t) {
+        return t * t;
+    },
+    easeInCubic: function easeInCubic(t) {
+        return Math.pow(t, 3);
+    },
+    easeOutQuad: function easeOutQuad(t) {
+        return -(t * (t - 2));
+    },
+    easeOutCubic: function easeOutCubic(t) {
+        return Math.pow(t - 1, 3) + 1;
+    },
+    easeInOutQuad: function easeInOutQuad(t) {
+        if (t < 0.5) {
+            return t * t * 2;
+        } else {
+            return -2 * (t - 2) * t - 1;
+        }
+        return;
+    },
+    easeInOutCubic: function easeInOutCubic(t) {
+        if (t < 0.5) {
+            return Math.pow(t, 3) * 4;
+        } else {
+            return Math.pow(t - 1, 3) * 4 + 1;
+        }
+    },
+    easeInOutSine: function easeInOutSine(t) {
+        return (1 - Math.cos(Math.PI * t)) / 2;
+    }
+};
+Transitions['ease-in'] = Transitions.easeInQuad;
+Transitions['ease-out'] = Transitions.easeOutQuad;
+
+/**
+ * 获取当前时间
+ * @returns {String} 当前时间
+ */
+function getCurrentTime() {
+    return new Date().getTime();
+}
+
+/**
+ * 是否是数字
+ * @param {Mix}
+ * @returns {Boolean}
+ */
+function isNumber(number) {
+    return typeof number == "number";
+}
+/**
+ * @file  控制大小值域的类
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ */
+
+"use strict";
+
+function SizeDataRange() {
     DataRange.call(this);
 }
 
 util.inherits(SizeDataRange, DataRange);
 
-util.extend(SizeDataRange.prototype, {
-    
-}); // end extend
-;/**
+util.extend(SizeDataRange.prototype, {}); // end extend
+/**
+ * TimeLine Component
+ */
+
+"use strict";
+
+function TimeLine(options) {
+  Class.call(this);
+}
+
+util.inherits(TimeLine, Class);
+
+util.extend(TimeLine.prototype, {});
+
+var timeLine = new TimeLine({});
+/**
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ * 地图可视化库，目前依赖与百度地图api，在百度地图api上展示点数据
+ *
+ */
+
+/**
  * Mapv主类
  * @param {Object}
  */
+'use strict';
+
 function Mapv(options) {
     Class.call(this);
 
@@ -734,9 +939,10 @@ function Mapv(options) {
     }, options));
 
     this._layers = [];
-    this._initDrawScale();
-    
+    //this._initDrawScale();
+
     this.notify('drawTypeControl');
+    this.mapEvent = new MapEvent(options.map);
 }
 
 util.inherits(Mapv, Class);
@@ -758,24 +964,69 @@ Mapv.prototype.drawTypeControl_changed = function () {
             this.getMap().removeControl(this.drawTypeControl);
         }
     }
+};
+/**
+ * @author Mofei Zhu <hello@zhuwenlong.com>
+ */
+
+'use strict';
+
+var MapEvent_id = 0;
+
+var MapEvent_events = {
+    mousemove: {},
+    click: {}
+};
+
+function MapEvent(map) {
+    map.addEventListener('mousemove', function (e) {
+        for (var i in MapEvent_events.mousemove) {
+            MapEvent_events.mousemove[i](e);
+        }
+    });
+
+    map.addEventListener('click', function (e) {
+        for (var i in MapEvent_events.click) {
+            MapEvent_events.click[i](e);
+        }
+    });
 }
-;function CanvasLayer(options){
+
+MapEvent.prototype.addEvent = function (type, callback) {
+    MapEvent_events[type][MapEvent_id++] = callback;
+};
+
+MapEvent.prototype.removeEvent = function (id) {
+    delete MapEvent_events[type][id];
+};
+/**
+ * 一直覆盖在当前地图视野的Canvas对象
+ *
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ *
+ * @param
+ * {
+ *     map 地图实例对象
+ * }
+ */
+
+'use strict';
+
+function CanvasLayer(options) {
     this.options = options || {};
     this.paneName = this.options.paneName || 'labelPane';
     this.zIndex = this.options.zIndex || 0;
+    this.context = this.options.context || '2d';
     this._map = options.map;
     this.show();
 }
 
 CanvasLayer.prototype = new BMap.Overlay();
 
-CanvasLayer.prototype.initialize = function(map){
+CanvasLayer.prototype.initialize = function (map) {
     this._map = map;
     var canvas = this.canvas = document.createElement("canvas");
-    canvas.style.cssText = "position:absolute;"
-                            + "left:0;" 
-                            + "top:0;"
-                            + "z-index:" + this.zIndex + ";";
+    canvas.style.cssText = "position:absolute;" + "left:0;" + "top:0;" + "z-index:" + this.zIndex + ";";
     this.adjustSize();
     map.getPanes()[this.paneName].appendChild(canvas);
     var that = this;
@@ -784,53 +1035,72 @@ CanvasLayer.prototype.initialize = function(map){
         that.draw();
     });
     return this.canvas;
-}
+};
 
-CanvasLayer.prototype.adjustSize = function(){
+CanvasLayer.prototype.adjustSize = function () {
     var size = this._map.getSize();
     var canvas = this.canvas;
-    canvas.width = size.width;
-    canvas.height = size.height;
-    canvas.style.width = canvas.width + "px";
-    canvas.style.height = canvas.height + "px";
-}
+    var pixelRatio;
 
-CanvasLayer.prototype.draw = function(){
+    if (this.context == 'webgl') {
+        pixelRatio = 1;
+    } else {
+        pixelRatio = (function (context) {
+            var backingStore = context.backingStorePixelRatio || context.webkitBackingStorePixelRatio || context.mozBackingStorePixelRatio || context.msBackingStorePixelRatio || context.oBackingStorePixelRatio || context.backingStorePixelRatio || 1;
+
+            return (window.devicePixelRatio || 1) / backingStore;
+        })(canvas.getContext('2d'));
+    }
+
+    canvas.width = size.width * pixelRatio;
+    canvas.height = size.height * pixelRatio;
+    canvas.style.width = size.width + "px";
+    canvas.style.height = size.height + "px";
+};
+
+CanvasLayer.prototype.draw = function () {
     var map = this._map;
-    var bounds = map.getBounds();
-    var sw = bounds.getSouthWest();
-    var ne = bounds.getNorthEast();
-    var pixel = map.pointToOverlayPixel(new BMap.Point(sw.lng, ne.lat));
-    this.canvas.style.left = pixel.x + "px";
-    this.canvas.style.top = pixel.y + "px";
-    this.dispatchEvent('draw');
-    this.options.update && this.options.update.call(this);
-}
+    var size = map.getSize();
+    var center = map.getCenter();
+    if (center) {
+        var pixel = map.pointToOverlayPixel(center);
+        this.canvas.style.left = pixel.x - size.width / 2 + 'px';
+        this.canvas.style.top = pixel.y - size.height / 2 + 'px';
+        this.dispatchEvent('draw');
+        this.options.update && this.options.update.call(this);
+    }
+};
 
-CanvasLayer.prototype.getContainer = function(){
+CanvasLayer.prototype.getContainer = function () {
     return this.canvas;
-}
+};
 
-CanvasLayer.prototype.show = function(){
+CanvasLayer.prototype.show = function () {
     if (!this.canvas) {
         this._map.addOverlay(this);
     }
     this.canvas.style.display = "block";
-}
+};
 
-CanvasLayer.prototype.hide = function(){
+CanvasLayer.prototype.hide = function () {
     this.canvas.style.display = "none";
     //this._map.removeOverlay(this);
-}
+};
 
-CanvasLayer.prototype.setZIndex = function(zIndex){
+CanvasLayer.prototype.setZIndex = function (zIndex) {
     this.canvas.style.zIndex = zIndex;
-}
+};
 
-CanvasLayer.prototype.getZIndex = function(){
+CanvasLayer.prototype.getZIndex = function () {
     return this.zIndex;
-}
-;function Layer (options) {
+};
+/**
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ */
+
+'use strict';
+
+function Layer(options) {
     Class.call(this);
 
     this._drawer = {};
@@ -856,16 +1126,17 @@ CanvasLayer.prototype.getZIndex = function(){
     }, options));
 
     this.dataRangeControl = new DataRangeControl();
+    this.Scale = new DrawScale();
 
     this.notify('data');
     this.notify('mapv');
-
 }
 
 util.inherits(Layer, Class);
 
 util.extend(Layer.prototype, {
-    initialize: function () {
+    initialize: function initialize() {
+
         if (this.canvasLayer) {
             return;
         }
@@ -873,15 +1144,16 @@ util.extend(Layer.prototype, {
         this.bindTo('map', this.getMapv());
 
         this.getMap().addControl(this.dataRangeControl);
-
+        this.getMap().addControl(this.Scale);
 
         var that = this;
 
         this.canvasLayer = new CanvasLayer({
             map: this.getMap(),
+            context: this.getContext(),
             zIndex: this.getZIndex(),
-            paneName : this.getPaneName(),
-            update: function () {
+            paneName: this.getPaneName(),
+            update: function update() {
                 that.draw();
             },
             elementTag: "canvas"
@@ -898,10 +1170,11 @@ util.extend(Layer.prototype, {
 
             this.setAnimationCtx(this.animationLayer.getContainer().getContext(this.getContext()));
         }
-
     },
 
-    draw: function () {
+    draw: function draw() {
+
+        var me = this;
 
         if (!this.getMapv()) {
             return;
@@ -913,27 +1186,63 @@ util.extend(Layer.prototype, {
             return false;
         }
 
-        if (this.getContext() == '2d') {
-            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
-        }
-
         this._calculatePixel();
 
-        this._getDrawer().drawMap();
+        if (this.getAnimation() !== 'time') {
+
+            if (this.getContext() == '2d') {
+                ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            }
+
+            this._getDrawer().drawMap();
+        }
 
         if (this.getDataType() === 'polyline' && this.getAnimation() && !this._animationFlag) {
             this.drawAnimation();
+
             this._animationFlag = true;
         }
 
-        this.dispatchEvent('draw');
+        var animationOptions = this.getAnimationOptions() || {};
+        if (this.getDataType() === 'polyline' && this.getAnimation() && !this._animationTime) {
+            this._animationTime = true;
+            var timeline = this.timeline = new Animation({
+                duration: animationOptions.duration || 10000, // 动画时长, 单位毫秒
+                fps: animationOptions.fps || 30, // 每秒帧数
+                delay: animationOptions.delay || Animation.INFINITE, // 延迟执行时间，单位毫秒,如果delay为infinite则表示手动执行
+                transition: Transitions[animationOptions.transition || "linear"],
+                onStop: animationOptions.onStop || function (e) {
+                    // 调用stop停止时的回调函数
+                    console.log('stop', e);
+                },
+                render: function render(e) {
 
+                    if (me.getContext() == '2d') {
+                        ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+                    }
+                    var time = parseInt(parseFloat(me._minTime) + (me._maxTime - me._minTime) * e);
+                    me._getDrawer().drawMap(time);
+
+                    animationOptions.render && animationOptions.render(time);
+                }
+            });
+
+            timeline.setFinishCallback(function () {
+                //setTimeout(function(){
+                timeline.start();
+                //}, 3000);
+            });
+
+            timeline.start();
+        }
+
+        this.dispatchEvent('draw');
     },
 
-    drawAnimation: function () {
+    drawAnimation: function drawAnimation() {
         var animationCtx = this.getAnimationCtx();
 
-        if (!animationCtx ) {
+        if (!animationCtx) {
             return false;
         }
 
@@ -949,13 +1258,13 @@ util.extend(Layer.prototype, {
         }
     },
 
-    animation_changed: function () {
+    animation_changed: function animation_changed() {
         if (this.getAnimation()) {
             this.drawAnimation();
         }
     },
 
-    mapv_changed: function () {
+    mapv_changed: function mapv_changed() {
 
         if (!this.getMapv()) {
             this.canvasLayer && this.canvasLayer.hide();
@@ -971,16 +1280,16 @@ util.extend(Layer.prototype, {
         this.draw();
     },
 
-    drawType_changed: function () {
+    drawType_changed: function drawType_changed() {
         this.updateControl();
         this.draw();
     },
 
-    drawOptions_changed: function () {
+    drawOptions_changed: function drawOptions_changed() {
         this.draw();
     },
 
-    updateControl: function () {
+    updateControl: function updateControl() {
         var mapv = this.getMapv();
 
         if (!mapv) {
@@ -991,17 +1300,17 @@ util.extend(Layer.prototype, {
         var map = this.getMap();
 
         // for drawer scale
-        if(drawer.scale && this.getDataRangeControl()) {
-            drawer.scale(mapv.Scale);
-            mapv.Scale.show();
+        if (drawer.scale && this.getDataRangeControl()) {
+            drawer.scale(this.Scale);
+            this.Scale.show();
         } else {
-            mapv && mapv.Scale.hide();
+            this.Scale.hide();
         }
 
         // mapv._drawTypeControl.showLayer(this);
         this.getMapv().OptionalData && this.getMapv().OptionalData.initController(this, this.getDrawType());
     },
-    _getDrawer: function () {
+    _getDrawer: function _getDrawer() {
         var drawType = this.getDrawType();
         if (!this._drawer[drawType]) {
             var funcName = drawType.replace(/(\w)/, function (v) {
@@ -1011,16 +1320,16 @@ util.extend(Layer.prototype, {
             var drawer = this._drawer[drawType] = eval('(new ' + funcName + '(this))');
             if (drawer.scale) {
                 if (this.getMapv()) {
-                    drawer.scale(this.getMapv().Scale);
-                    this.getMapv().Scale.show();
+                    drawer.scale(this.Scale);
+                    this.Scale.show();
                 }
             } else {
-                this.getMapv().Scale.hide();
+                this.Scale.hide();
             }
         }
         return this._drawer[drawType];
     },
-    _calculatePixel: function () {
+    _calculatePixel: function _calculatePixel() {
         var map = this.getMapv().getMap();
         var mercatorProjection = map.getMapType().getProjection();
 
@@ -1029,8 +1338,7 @@ util.extend(Layer.prototype, {
         var zoom = map.getZoom();
         var zoomUnit = Math.pow(2, 18 - zoom);
         var mcCenter = mercatorProjection.lngLatToPoint(map.getCenter());
-        var nwMc = new BMap.Pixel(mcCenter.x - (map.getSize().width / 2) * zoomUnit,
-            mcCenter.y + (map.getSize().height / 2) * zoomUnit); //左上角墨卡托坐标
+        var nwMc = new BMap.Pixel(mcCenter.x - map.getSize().width / 2 * zoomUnit, mcCenter.y + map.getSize().height / 2 * zoomUnit); //左上角墨卡托坐标
         var data = this.getData();
         var map = this.getMap();
         for (var j = 0; j < data.length; j++) {
@@ -1052,11 +1360,11 @@ util.extend(Layer.prototype, {
                 if (this.getCoordType() === 'bd09ll') {
                     for (var i = 0; i < data[j].geo.length; i++) {
                         var pixel = map.pointToPixel(new BMap.Point(data[j].geo[i][0], data[j].geo[i][1]));
-                        tmp.push([pixel.x, pixel.y]);
+                        tmp.push([pixel.x, pixel.y, parseFloat(data[j].geo[i][2])]);
                     }
                 } else if (this.getCoordType() === 'bd09mc') {
                     for (var i = 0; i < data[j].geo.length; i++) {
-                        tmp.push([(data[j].geo[i][0] - nwMc.x) / zoomUnit, (nwMc.y - data[j].geo[i][1]) / zoomUnit]);
+                        tmp.push([(data[j].geo[i][0] - nwMc.x) / zoomUnit, (nwMc.y - data[j].geo[i][1]) / zoomUnit, parseFloat(data[j].geo[i][2])]);
                     }
                 }
                 data[j].pgeo = tmp;
@@ -1064,7 +1372,7 @@ util.extend(Layer.prototype, {
         }
         console.timeEnd('parseData');
     },
-    data_changed: function () {
+    data_changed: function data_changed() {
         var data = this.getData();
         if (data) {
             if (this.getDataType() === "polyline" && this.getAnimation()) {
@@ -1073,9 +1381,28 @@ util.extend(Layer.prototype, {
                 }
             }
 
+            if (this.getDataType() === "polyline" && this.getAnimation() === 'time') {
+                this._minTime = data[0] && data[0].geo[0][2];
+                this._maxTime = this._minTime;
+                for (var i = 0; i < data.length; i++) {
+                    var geo = data[i].geo;
+                    for (var j = 0; j < geo.length; j++) {
+                        var time = geo[j][2];
+                        if (time < this._minTime) {
+                            this._minTime = time;
+                        }
+                        if (time > this._maxTime) {
+                            this._maxTime = time;
+                        }
+                    }
+                }
+                //this._minTime = 1439568000;
+                //this._maxTime = 1439827200;
+            }
+
             if (data.length > 0) {
                 this._min = data[0].count;
-                this._max = data[0].count;
+                this._max = this._max;
             }
 
             for (var i = 0; i < data.length; i++) {
@@ -1088,26 +1415,35 @@ util.extend(Layer.prototype, {
             this.draw();
         }
     },
-    getDataRange: function () {
+    getDataRange: function getDataRange() {
         return {
+            minTime: this._minTime,
+            maxTime: this._maxTime,
             min: this._min,
             max: this._max
         };
     },
-    zIndex_changed: function () {
+    zIndex_changed: function zIndex_changed() {
         var zIndex = this.getZIndex();
         this.canvasLayer.setZIndex(zIndex);
     },
 
-    dataRangeControl_changed: function () {
+    dataRangeControl_changed: function dataRangeControl_changed() {
         this.updateControl();
         this._getDrawer().notify('drawOptions');
     }
 });
-;function DataControl(superObj) {
+/**
+ * @file this file is to supprot customer data
+ * @author Mofei Zhu <zhuwenlong@baidu.ocm>
+ */
+
+'use strict';
+
+function DataControl(superObj) {
     this.initDom();
     this.initEvent();
-    this.super = superObj;
+    this['super'] = superObj;
     this.geoData = superObj.geoData;
     // console.log(this.geoData.setData);
 }
@@ -1216,7 +1552,7 @@ DataControl.prototype.initEvent = function () {
             data = JSON.parse(dataStr.replace(/\s/g, ''));
             // console.log('??!@',data)
             var count = 0;
-            while (typeof (data) === 'string' && count <= 10) {
+            while (typeof data === 'string' && count <= 10) {
                 data = JSON.parse(data);
                 count++;
             }
@@ -1240,7 +1576,7 @@ DataControl.prototype.initEvent = function () {
                     var obj = {};
                     var nonameIndex = 0;
                     for (var j = 0; j < values.length; j++) {
-                        var name = keys[j] || 'noname' + (nonameIndex++);
+                        var name = keys[j] || 'noname' + nonameIndex++;
                         name = name.replace(/\\r/g, '');
                         obj[name] = Number(values[j].replace(/\\r/g, '').replace(/\"/g, ''));
                     }
@@ -1264,16 +1600,22 @@ DataControl.prototype.initEvent = function () {
         }
 
         self.geoData.setData(data);
-        console.log(self.super._layers)
-        for(var i=0;i<self.super._layers.length;i++){
-                self.super._layers[i].draw();
+        console.log(self['super']._layers);
+        for (var i = 0; i < self['super']._layers.length; i++) {
+            self['super']._layers[i].draw();
         }
 
         return true;
     }
-
 };
-;function DataRangeControl(){
+/**
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ * legend控件
+ */
+
+'use strict';
+
+function DataRangeControl() {
 
     // 默认停靠位置和偏移量
     this.defaultAnchor = BMAP_ANCHOR_BOTTOM_RIGHT;
@@ -1284,7 +1626,7 @@ DataRangeControl.prototype = new BMap.Control();
 
 util.extend(DataRangeControl.prototype, {
 
-    initialize: function(map){
+    initialize: function initialize(map) {
         var canvas = this.canvas = document.createElement('canvas');
         canvas.style.background = '#fff';
         canvas.style.boxShadow = 'rgba(0,0,0,0.2) 0 0 4px 2px';
@@ -1296,11 +1638,11 @@ util.extend(DataRangeControl.prototype, {
         return canvas;
     },
 
-    getContainer: function(){
+    getContainer: function getContainer() {
         return this.canvas;
     },
 
-    drawSizeSplit: function (splitList, drawOptions) {
+    drawSizeSplit: function drawSizeSplit(splitList, drawOptions) {
         var canvas = this.canvas;
         canvas.width = 100;
         canvas.height = 190;
@@ -1323,7 +1665,7 @@ util.extend(DataRangeControl.prototype, {
             ctx.arc(maxSize + 5, height, splitList[i].size, 0, Math.PI * 2, false);
             var startText = splitList[i].start || '~';
             var endText = splitList[i].end || '~';
-            var text =  startText + ' - ' + endText;
+            var text = startText + ' - ' + endText;
             ctx.closePath();
             ctx.fillStyle = drawOptions.fillStyle || 'rgba(50, 50, 200, 0.8)';
             ctx.fill();
@@ -1337,7 +1679,7 @@ util.extend(DataRangeControl.prototype, {
         }
     },
 
-    drawCategorySplit: function (splitList, drawOptions) {
+    drawCategorySplit: function drawCategorySplit(splitList, drawOptions) {
         var canvas = this.canvas;
         canvas.width = 80;
         canvas.height = 190;
@@ -1357,7 +1699,7 @@ util.extend(DataRangeControl.prototype, {
         }
     },
 
-    drawChoroplethSplit: function (splitList, drawOptions) {
+    drawChoroplethSplit: function drawChoroplethSplit(splitList, drawOptions) {
         var canvas = this.canvas;
         canvas.width = 100;
         canvas.height = 190;
@@ -1378,23 +1720,34 @@ util.extend(DataRangeControl.prototype, {
         };
     },
 
-    hide: function () {
+    hide: function hide() {
         if (this.canvas) {
             this.canvas.style.display = 'none';
         }
     },
 
-    show: function () {
+    show: function show() {
         if (this.canvas) {
             this.canvas.style.display = 'block';
         }
     }
 
 });
-;function DrawScale() {
-    this.init();
-    this._Event();
+/**
+ * @file drawScale
+ * @author Mofei Zhu (zhuwenlong@baidu.com)
+ */
+
+'use strict';
+
+function DrawScale() {
+
+    // 默认停靠位置和偏移量
+    this.defaultAnchor = BMAP_ANCHOR_BOTTOM_RIGHT;
+    this.defaultOffset = new BMap.Size(10, 10);
 }
+
+DrawScale.prototype = new BMap.Control();
 
 DrawScale.prototype.change = function (callback) {
     var self = this;
@@ -1408,7 +1761,9 @@ DrawScale.prototype.hide = function () {
 
 DrawScale.prototype.show = function () {
     var self = this;
-    self.box.style.display = 'block';
+    if (self.box) {
+        self.box.style.display = 'block';
+    }
 };
 
 DrawScale.prototype.set = function (obj) {
@@ -1423,7 +1778,7 @@ DrawScale.prototype.set = function (obj) {
 /**
  * init dom
  */
-DrawScale.prototype.init = function () {
+DrawScale.prototype.initialize = function (map) {
     var self = this;
 
     // prepare param
@@ -1436,12 +1791,8 @@ DrawScale.prototype.init = function () {
     self.offsetTop = 10;
     self.offsetBottom = 10;
     self.drawHeight = self.height - self.offsetTop - self.offsetBottom;
-    self.colors = [
-        '#49ae22', '#77c01a', '#a0cd12', '#cadd0a', '#f8ed01', '#e1de03', '#feb60a', '#fe7e13', '#fe571b', '#fd3620'
-    ];
-    self.defaultColors = [
-        '#49ae22', '#77c01a', '#a0cd12', '#cadd0a', '#f8ed01', '#e1de03', '#feb60a', '#fe7e13', '#fe571b', '#fd3620'
-    ];
+    self.colors = ['#49ae22', '#77c01a', '#a0cd12', '#cadd0a', '#f8ed01', '#e1de03', '#feb60a', '#fe7e13', '#fe571b', '#fd3620'];
+    self.defaultColors = ['#49ae22', '#77c01a', '#a0cd12', '#cadd0a', '#f8ed01', '#e1de03', '#feb60a', '#fe7e13', '#fe571b', '#fd3620'];
     // param-event
     self.point = {
         x: 0,
@@ -1475,19 +1826,23 @@ DrawScale.prototype.init = function () {
     box.style.borderRadius = '6px';
     box.style.background = 'white';
     box.style.position = 'absolute';
-    box.style.right = '10px';
-    box.style.bottom = '10px';
+    //box.style.right = '10px';
+    //box.style.bottom = '10px';
     box.style.width = self.width + 'px';
     box.style.height = self.height + 'px';
     box.style.zIndex = 10000;
     box.appendChild(canvas);
-    document.body.appendChild(box);
+    map.getContainer().appendChild(box);
 
     //
     self.ctx = canvas.getContext('2d');
 
     // draw it
     self._draw();
+
+    this._Event();
+
+    return box;
 };
 
 DrawScale.prototype._Event = function () {
@@ -1565,6 +1920,11 @@ DrawScale.prototype._Event = function () {
 DrawScale.prototype._draw = function () {
     var self = this;
     var ctx = self.ctx;
+
+    if (!ctx) {
+        return;
+    }
+
     // clear
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
     self.hoveredHandle = null;
@@ -1588,7 +1948,7 @@ DrawScale.prototype._draw = function () {
             var present = i * steps / self.height;
             gradient.addColorStop(present, tempColor[i]);
         }
-    } else if (typeof (self.colors) === 'object') {
+    } else if (typeof self.colors === 'object') {
         for (var i in self.colors) {
             gradient.addColorStop(i, self.colors[i]);
         }
@@ -1657,7 +2017,6 @@ DrawScale.prototype._draw = function () {
     } else {
         ctx.canvas.style.cursor = 'default';
     }
-
 };
 
 function drawTips(obj) {
@@ -1686,17 +2045,16 @@ function drawTips(obj) {
     ctx.fillText(obj.text, hdlMid + 8, hdlTop);
     ctx.restore();
 }
-;/* globals util BMap BMAP_ANCHOR_TOP_LEFT BMAP_ANCHOR_TOP_RIGHT*/
+/**
+ * @file 选址绘制类型控件
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ */
 
-util.addCssByStyle(
-    [
-        '#MapvDrawTypeControl { list-style:none; position:absolute; right:0px; top:0px; bottom:0px; padding:0; margin:0;',
-        'border-radius: 5px; overflow: hidden; border: 1px solid rgb(153, 153, 153); box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 4px 2px;}',
-        '#MapvDrawTypeControl li{ padding:0; margin:0; cursor:pointer; ',
-        'color:#333; padding:5px; background:rgba(255, 255, 255, 1); border-bottom: 1px solid #aaa;}',
-        '#MapvDrawTypeControl li.current{ background:#999; color:#fff;}'
-    ].join('\n')
-);
+/* globals util BMap BMAP_ANCHOR_TOP_LEFT BMAP_ANCHOR_TOP_RIGHT*/
+
+'use strict';
+
+util.addCssByStyle(['#MapvDrawTypeControl { list-style:none; position:absolute; right:0px; top:0px; bottom:0px; padding:0; margin:0;', 'border-radius: 5px; overflow: hidden; border: 1px solid rgb(153, 153, 153); box-shadow: rgba(0, 0, 0, 0.2) 0px 0px 4px 2px;}', '#MapvDrawTypeControl li{ padding:0; margin:0; cursor:pointer; ', 'color:#333; padding:5px; background:rgba(255, 255, 255, 1); border-bottom: 1px solid #aaa;}', '#MapvDrawTypeControl li.current{ background:#999; color:#fff;}'].join('\n'));
 
 function DrawTypeControl(options) {
     Class.call(this);
@@ -1742,7 +2100,6 @@ DrawTypeControl.prototype.initialize = function (map) {
             }
 
             me.layer.setDrawType(drawType);
-
         }
     });
 
@@ -1752,7 +2109,6 @@ DrawTypeControl.prototype.initialize = function (map) {
     map.getContainer().appendChild(ul);
     // 将DOM元素返回
     return ul;
-
 };
 
 DrawTypeControl.prototype.getContainer = function () {
@@ -1767,7 +2123,7 @@ DrawTypeControl.prototype.drawTypeControlOptions_changed = function () {
     }
 
     this.showLayer();
-    
+
     if (this.getDrawTypeControlOptions().anchor !== undefined) {
         this.setAnchor(this.getDrawTypeControlOptions().anchor);
     }
@@ -1775,8 +2131,7 @@ DrawTypeControl.prototype.drawTypeControlOptions_changed = function () {
     if (this.getDrawTypeControlOptions().offset !== undefined) {
         this.setOffset(this.getDrawTypeControlOptions().offset);
     }
-
-}
+};
 
 DrawTypeControl.prototype.showLayer = function () {
     if (!this.layer) {
@@ -1796,15 +2151,20 @@ DrawTypeControl.prototype.showLayer = function () {
         li.innerHTML = key;
         ul.appendChild(li);
     }
+};
+/**
+ * @file this object is to deal with the optional datas
+ * @author Mofei Zhu <zhuwenlong@baidu.com>
+ */
+/* globals util */
 
-}
-;/* globals util */
+'use strict';
 
 function OptionalData(superObj) {
     // set params
     var options = superObj.options || {};
     this.drawType = options.drawType;
-    this.super = superObj;
+    this['super'] = superObj;
     // init options
     this.options = options.drawOptions || {};
     // init css
@@ -1816,14 +2176,7 @@ function OptionalData(superObj) {
 }
 
 OptionalData.prototype.initCSS = function () {
-    util.addCssByStyle([
-        '.controlBox { position:absolute; left:0px; top:0px; background:rgba(0,0,0,0.5); padding:10px; }',
-        '.controlBox input {border-radius:6px; border:none; padding:10px;}',
-        '.controlBox button ',
-        '{ padding:8px 10px; border:none; width:40%; margin-left: 10px; border-radius:6px; cursor:pointer; }',
-        '.controlBoxBlock { color:#fff; padding: 10px; }',
-        '.controlBoxTitle { display:inline-block; width:100px; text-align:right; padding-right:10px; }'
-    ].join('\n'));
+    util.addCssByStyle(['.controlBox { position:absolute; left:0px; top:0px; background:rgba(0,0,0,0.5); padding:10px; }', '.controlBox input {border-radius:6px; border:none; padding:10px;}', '.controlBox button ', '{ padding:8px 10px; border:none; width:40%; margin-left: 10px; border-radius:6px; cursor:pointer; }', '.controlBoxBlock { color:#fff; padding: 10px; }', '.controlBoxTitle { display:inline-block; width:100px; text-align:right; padding-right:10px; }'].join('\n'));
 };
 
 /**
@@ -1853,7 +2206,7 @@ OptionalData.prototype.initDom = function () {
  */
 
 OptionalData.prototype.initController = function (layer, drawType) {
-  return false
+    return false;
     this._layer = layer;
     var self = this;
     var options;
@@ -1880,7 +2233,7 @@ OptionalData.prototype.initController = function (layer, drawType) {
     var newTag = [];
     for (var i = 0; i < editTag.length; i++) {
         var tag = editTag[i];
-        if (typeof (tag) === 'string') {
+        if (typeof tag === 'string') {
             tag = {
                 name: tag,
                 type: 'text'
@@ -1981,7 +2334,6 @@ OptionalData.prototype.bindEvent = function () {
                         self.options[name] = val.value;
                     }
                 }
-
             }
         }
 
@@ -2003,7 +2355,13 @@ OptionalData.prototype.bindEvent = function () {
         // console.log('reset', self.options);
     };
 };
-;function Drawer(layer) {
+/**
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ */
+
+'use strict';
+
+function Drawer(layer) {
 
     Class.call(this);
 
@@ -2026,7 +2384,6 @@ OptionalData.prototype.bindEvent = function () {
     this.bindTo('drawOptions', layer);
     this.bindTo('mapv', layer);
     this.bindTo('map', layer);
-
 }
 
 util.inherits(Drawer, Class);
@@ -2041,43 +2398,31 @@ Drawer.prototype.endDrawMap = function () {
     if (this.getLayer().getContext() == "2d") {
         this.endDrawCanvasMap();
     }
-}
+};
 
 Drawer.prototype.beginDrawCanvasMap = function () {
 
     var drawOptions = this.getDrawOptions();
     var ctx = this.getCtx();
+    var pixelRatio = util.getPixelRatio(ctx);
 
     ctx.save();
 
-    var property = [
-        'globalCompositeOperation', 
-        'shadowColor', 
-        'shadowBlur',
-        'shadowOffsetX',
-        'shadowOffsetY',
-        'globalAlpha',
-        'fillStyle',
-        'strokeStyle',
-        'lineWidth',
-        'lineCap',
-        'lineJoin',
-        'lineWidth',
-        'miterLimit'
-    ];
+    ctx.scale(pixelRatio, pixelRatio);
+
+    var property = ['globalCompositeOperation', 'shadowColor', 'shadowBlur', 'shadowOffsetX', 'shadowOffsetY', 'globalAlpha', 'fillStyle', 'strokeStyle', 'lineWidth', 'lineCap', 'lineJoin', 'lineWidth', 'miterLimit'];
 
     for (var i = 0; i < property.length; i++) {
         if (drawOptions[property[i]]) {
             ctx[property[i]] = drawOptions[property[i]];
         }
     }
-
-}
+};
 
 Drawer.prototype.endDrawCanvasMap = function () {
     var ctx = this.getCtx();
     ctx.restore();
-}
+};
 
 Drawer.prototype.drawOptions_changed = function () {
 
@@ -2087,19 +2432,9 @@ Drawer.prototype.drawOptions_changed = function () {
     } else {
         this.generalSplitList();
     }
-
 };
 
-Drawer.prototype.colors = [
-    'rgba(17, 102, 252, 0.8)',
-    'rgba(52, 139, 251, 0.8)',
-    'rgba(110, 176, 253, 0.8)',
-    'rgba(255, 241, 193, 0.8)',
-    'rgba(255, 146, 149, 0.8)',
-    'rgba(253, 98, 104, 0.8)',
-    'rgba(255, 0, 0, 0.8)',
-    'rgba(255, 51, 61, 0.8)'
-];
+Drawer.prototype.colors = ['rgba(17, 102, 252, 0.8)', 'rgba(52, 139, 251, 0.8)', 'rgba(110, 176, 253, 0.8)', 'rgba(255, 241, 193, 0.8)', 'rgba(255, 146, 149, 0.8)', 'rgba(253, 98, 104, 0.8)', 'rgba(255, 0, 0, 0.8)', 'rgba(255, 51, 61, 0.8)'];
 
 Drawer.prototype.generalSplitList = function () {
     var dataRange = this.getLayer().getDataRange();
@@ -2137,8 +2472,14 @@ Drawer.prototype.getRadius = function () {
     }
 
     return radius;
-}
-;/* globals Drawer, util */
+};
+/**
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ */
+
+/* globals Drawer, util */
+
+"use strict";
 
 function BubbleDrawer() {
     Drawer.apply(this, arguments);
@@ -2152,7 +2493,6 @@ BubbleDrawer.prototype.drawMap = function () {
     var data = this.getLayer().getData();
 
     var ctx = this.getCtx();
-
 
     var drawOptions = this.getDrawOptions();
 
@@ -2169,8 +2509,15 @@ BubbleDrawer.prototype.drawMap = function () {
     }
 
     this.endDrawMap();
-}
-;/* globals Drawer, util */
+};
+/**
+ * @file 按颜色分类绘制方法
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ */
+
+/* globals Drawer, util */
+
+"use strict";
 
 function CategoryDrawer() {
     Drawer.apply(this, arguments);
@@ -2203,7 +2550,13 @@ CategoryDrawer.prototype.drawMap = function () {
 
     this.endDrawMap();
 };
-;/* globals Drawer, util */
+/**
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ */
+
+/* globals Drawer, util */
+
+'use strict';
 
 function ChoroplethDrawer() {
     Drawer.apply(this, arguments);
@@ -2229,7 +2582,8 @@ ChoroplethDrawer.prototype.drawMap = function () {
         }
     }
 
-    if (dataType === 'polyline' || dataType === 'polygon') { // 画线或面
+    if (dataType === 'polyline' || dataType === 'polygon') {
+        // 画线或面
 
         for (var i = 0, len = data.length; i < len; i++) {
             var geo = data[i].pgeo;
@@ -2257,12 +2611,11 @@ ChoroplethDrawer.prototype.drawMap = function () {
                 var center = util.getGeoCenter(geo);
                 ctx.fillText(data[i].count, center[0], center[1]);
             }
-
         }
+    } else {
+        // 画点
 
-    } else { // 画点
-
-        var radius = this.getRadius(); 
+        var radius = this.getRadius();
         for (var i = 0, len = data.length; i < len; i++) {
             var item = data[i];
             ctx.fillStyle = this.dataRange.getColorByRange(item.count);
@@ -2280,7 +2633,14 @@ ChoroplethDrawer.prototype.drawMap = function () {
 
     this.endDrawMap();
 };
-;/* globals Drawer mercatorProjection BMap util */
+/**
+ * @file draw grad on the map
+ * @author Mofei Zhu <zhuwenlong@baidu.com>
+ */
+
+/* globals Drawer mercatorProjection BMap util */
+
+'use strict';
 
 var min;
 var max;
@@ -2312,14 +2672,14 @@ ClusterDrawer.prototype.drawMap = function () {
     var param = this.formatParam();
     // console.log(param)
 
-    console.log(param)
+    console.log(param);
     var size = param.size;
 
     var mercatorProjection = map.getMapType().getProjection();
 
     var mcCenter = mercatorProjection.lngLatToPoint(map.getCenter());
-    var nwMcX = mcCenter.x - (map.getSize().width / 2) * zoomUnit;
-    var nwMc = new BMap.Pixel(nwMcX, mcCenter.y + (map.getSize().height / 2) * zoomUnit);
+    var nwMcX = mcCenter.x - map.getSize().width / 2 * zoomUnit;
+    var nwMc = new BMap.Pixel(nwMcX, mcCenter.y + map.getSize().height / 2 * zoomUnit);
     // 左上角墨卡托坐标
 
     var gridStep = size / zoomUnit;
@@ -2329,7 +2689,7 @@ ClusterDrawer.prototype.drawMap = function () {
 
     var stockXA = [];
     var stickXAIndex = 0;
-    while ((startX + stickXAIndex * gridStep) < map.getSize().width) {
+    while (startX + stickXAIndex * gridStep < map.getSize().width) {
         var value = startX + stickXAIndex * gridStep;
         stockXA.push(value.toFixed(2));
         stickXAIndex++;
@@ -2339,7 +2699,7 @@ ClusterDrawer.prototype.drawMap = function () {
     var startY = (nwMc.y - startYMc) / zoomUnit;
     var stockYA = [];
     var stickYAIndex = 0;
-    while ((startY + stickYAIndex * gridStep) < map.getSize().height) {
+    while (startY + stickYAIndex * gridStep < map.getSize().height) {
         value = startY + stickYAIndex * gridStep;
         stockYA.push(value.toFixed(2));
         stickYAIndex++;
@@ -2357,20 +2717,19 @@ ClusterDrawer.prototype.drawMap = function () {
         var x = data[i].px;
         var y = data[i].py;
         var val = parseInt(data[i].count, 10);
-        var isSmallX = x < stockXA[0];
-        var isSmallY = y < stockYA[0];
-        var isBigX = x > (Number(stockXA[stockXA.length - 1]) + Number(gridStep));
-        var isBigY = y > (Number(stockYA[stockYA.length - 1]) + Number(gridStep));
-        if (isSmallX || isSmallY || isBigX || isBigY) {
-            continue;
-        }
+        var isSmallX = x * 2 < stockXA[0];
+        var isSmallY = y * 2 < stockYA[0];
+        var isBigX = x / 2 > Number(stockXA[stockXA.length - 1]) + Number(gridStep);
+        var isBigY = y / 2 > Number(stockYA[stockYA.length - 1]) + Number(gridStep);
+        // if (isSmallX || isSmallY || isBigX || isBigY) {
+        // continue;
+        // }
         for (var j = 0; j < stockXA.length; j++) {
             var dataX = Number(stockXA[j]);
-            if ((x >= dataX) && (x < dataX + gridStep)) {
+            if (x >= dataX && x < dataX + gridStep) {
                 for (var k = 0; k < stockYA.length; k++) {
                     var dataY = Number(stockYA[k]);
-                    if ((y >= dataY) && (y < dataY + gridStep)) {
-                        // grids[stockXA[j] + '_' + stockYA[k]] += 1;
+                    if (y >= dataY && y < dataY + gridStep) {
                         grids[stockXA[j] + '_' + stockYA[k]] += val;
                         val = grids[stockXA[j] + '_' + stockYA[k]];
                     }
@@ -2407,17 +2766,14 @@ ClusterDrawer.prototype.drawMap = function () {
         ctx.strokeStyle = param.strokeStyle || '#fff';
         ctx.stroke();
 
-        // if (this.drawOptions.showNum) {
-        ctx.save();
-        // ctx.fillStyle = 'black';
+        // ctx.save();
         ctx.font = 30 * v / 10 + 'px serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
         if (grids[i] !== 0 && param.label.show) {
-
-            ctx.fillStyle =  '#fff';
+            ctx.fillStyle = '#fff';
             ctx.fillText(grids[i], cx, cy);
-            ctx.restore();
+            // ctx.restore();
         }
         // }
     }
@@ -2426,15 +2782,14 @@ ClusterDrawer.prototype.drawMap = function () {
     this.endDrawMap();
 };
 
-// ClusterDrawer.prototype.drawDataRange = function (canvas, data, drawOptions) {
-// };
-
 /**
  * format param
  * @return {[type]} [description]
  */
 ClusterDrawer.prototype.formatParam = function () {
     var options = this.getDrawOptions();
+    options = JSON.stringify(options);
+    options = JSON.parse(options);
 
     var size = options.size || 60;
     size = size + (options.unit || 'px');
@@ -2444,18 +2799,76 @@ ClusterDrawer.prototype.formatParam = function () {
         size = parseInt(size, 10);
     }
     options.size = size;
-    return options
+    return options;
 };
-;/* globals Drawer mercatorProjection BMap util */
+/**
+ * @file draw grad on the map
+ * @author Mofei Zhu <zhuwenlong@baidu.com>
+ */
+
+/* globals Drawer mercatorProjection BMap util */
+
+'use strict';
 
 var min;
 var max;
+var _this = {};
 
 function DensityDrawer() {
     this.Scale;
     this.masker = {};
     Drawer.apply(this, arguments);
+
+    // init
+    this.init();
 }
+
+DensityDrawer.prototype.init = function () {
+    var self = this;
+    var mapv = this.getMapv();
+    //init events
+    var options = this.getDrawOptions();
+    // console.log()
+    if (options.events) {
+        for (var i in options.events) {
+            addEventFn(i);
+        }
+    }
+
+    function addEventFn(i) {
+        mapv.mapEvent.addEvent(i, function (e) {
+            var cache = null;
+            var point = null;
+            // console.log(self.grids)
+            if (options.type == 'honeycomb') {
+                // console.log(e.offsetX, e.offsetY)
+                // var count = data[i].count;
+                var pX = e.offsetX;
+                var pY = e.offsetY;
+                //
+                var fixYIndex = Math.round((pY - _this.startY) / _this.depthY);
+                var fixY = fixYIndex * _this.depthY + _this.startY;
+                var fixXIndex = Math.round((pX - _this.startX) / _this.depthX);
+                var fixX = fixXIndex * _this.depthX + _this.startX;
+                //
+                if (fixYIndex % 2) {
+                    fixX = fixX - _this.depthX / 2;
+                }
+                point = self.grids[fixX + '|' + fixY].len;
+            } else {
+                for (var j in self.grids) {
+                    var pos = j.split('_');
+                    if (e.offsetX - pos[0] <= _this.gridStep && e.offsetY - pos[1] <= _this.gridStep) {
+                        point = self.grids[j];
+
+                        break;
+                    }
+                }
+            }
+            options.events[i](e, point);
+        });
+    }
+};
 
 util.inherits(DensityDrawer, Drawer);
 
@@ -2491,8 +2904,8 @@ DensityDrawer.prototype.drawMap = function () {
 
     var mercatorProjection = map.getMapType().getProjection();
     var mcCenter = mercatorProjection.lngLatToPoint(map.getCenter());
-    var nwMcX = mcCenter.x - (map.getSize().width / 2) * zoomUnit;
-    var nwMc = new BMap.Pixel(nwMcX, mcCenter.y + (map.getSize().height / 2) * zoomUnit);
+    var nwMcX = mcCenter.x - map.getSize().width / 2 * zoomUnit;
+    var nwMc = new BMap.Pixel(nwMcX, mcCenter.y + map.getSize().height / 2 * zoomUnit);
     // 左上角墨卡托坐标
 
     window.console.time('computerMapData');
@@ -2512,7 +2925,7 @@ DensityDrawer.prototype.drawMap = function () {
     }
     // console.log(gridsObj);
 
-    var grids = gridsObj.grids;
+    var grids = this.grids = gridsObj.grids;
     this.dataRange.setMax(gridsObj.max);
     this.dataRange.setMin(gridsObj.min);
     var max = gridsObj.max;
@@ -2535,9 +2948,9 @@ DensityDrawer.prototype.drawMap = function () {
 
     var gridsObj = {};
     if (this.getDrawOptions().type === 'honeycomb') {
-        drawHoneycomb.call(this,obj);
+        drawHoneycomb.call(this, obj);
     } else {
-        drawRec.call(this,obj);
+        drawRec.call(this, obj);
     }
     window.console.timeEnd('drawMap');
 
@@ -2560,7 +2973,7 @@ function recGrids(obj, map) {
 
     var grids = {};
 
-    var gridStep = size / zoomUnit;
+    var gridStep = _this.gridStep = size / zoomUnit;
 
     var startXMc = parseInt(nwMc.x / size, 10) * size;
 
@@ -2568,7 +2981,7 @@ function recGrids(obj, map) {
 
     var stockXA = [];
     var stickXAIndex = 0;
-    while ((startX + stickXAIndex * gridStep) < map.getSize().width) {
+    while (startX + stickXAIndex * gridStep < map.getSize().width) {
         var value = startX + stickXAIndex * gridStep;
         stockXA.push(value.toFixed(2));
         stickXAIndex++;
@@ -2578,7 +2991,7 @@ function recGrids(obj, map) {
     var startY = (nwMc.y - startYMc) / zoomUnit;
     var stockYA = [];
     var stickYAIndex = 0;
-    while ((startY + stickYAIndex * gridStep) < map.getSize().height) {
+    while (startY + stickYAIndex * gridStep < map.getSize().height) {
         value = startY + stickYAIndex * gridStep;
         stockYA.push(value.toFixed(2));
         stickYAIndex++;
@@ -2597,17 +3010,17 @@ function recGrids(obj, map) {
         var val = parseInt(data[i].count, 10);
         var isSmallX = x < stockXA[0];
         var isSmallY = y < stockYA[0];
-        var isBigX = x > (Number(stockXA[stockXA.length - 1]) + Number(gridStep));
-        var isBigY = y > (Number(stockYA[stockYA.length - 1]) + Number(gridStep));
+        var isBigX = x > Number(stockXA[stockXA.length - 1]) + Number(gridStep);
+        var isBigY = y > Number(stockYA[stockYA.length - 1]) + Number(gridStep);
         if (isSmallX || isSmallY || isBigX || isBigY) {
             continue;
         }
         for (var j = 0; j < stockXA.length; j++) {
             var dataX = Number(stockXA[j]);
-            if ((x >= dataX) && (x < dataX + gridStep)) {
+            if (x >= dataX && x < dataX + gridStep) {
                 for (var k = 0; k < stockYA.length; k++) {
                     var dataY = Number(stockYA[k]);
-                    if ((y >= dataY) && (y < dataY + gridStep)) {
+                    if (y >= dataY && y < dataY + gridStep) {
                         grids[stockXA[j] + '_' + stockYA[k]] += val;
                         val = grids[stockXA[j] + '_' + stockYA[k]];
                     }
@@ -2619,7 +3032,6 @@ function recGrids(obj, map) {
         min = min > val ? val : min;
         max = max < val ? val : max;
     }
-
 
     return {
         grids: grids,
@@ -2639,7 +3051,6 @@ function drawRec(obj) {
     var self = obj.sup;
     var options = formatParam.call(this);
 
-
     var gridStep = size / zoomUnit;
     var step = (max - min + 1) / 10;
 
@@ -2650,17 +3061,15 @@ function drawRec(obj) {
         var v = (grids[i] - min) / step;
         //var color = fillColors[v | 0];
         var color = obj.dataRange.getColorByGradient(grids[i]);
-        try{
-            if(options.opacity){
-                var alpha = parseInt(color.match(/rgba\(.+?\,.+?\,.+?\,(.+?)\)/)[1] * options.opacity)/255;
-                color = color.replace(/(rgba\(.+?\,.+?\,.+?\,).+?(\))/,'$1'+ alpha +'$2');
+        try {
+            if (options.opacity) {
+                var alpha = parseInt(color.match(/rgba\(.+?\,.+?\,.+?\,(.+?)\)/)[1] * options.opacity) / 255;
+                color = color.replace(/(rgba\(.+?\,.+?\,.+?\,).+?(\))/, '$1' + alpha + '$2');
             }
-        }catch(e){
+        } catch (e) {}
 
-        }
-
-        var isTooSmall = self.masker.min && (grids[i] < self.masker.min);
-        var isTooBig = self.masker.max && (grids[i] > self.masker.max);
+        var isTooSmall = self.masker.min && grids[i] < self.masker.min;
+        var isTooBig = self.masker.max && grids[i] > self.masker.max;
         if (grids[i] === 0 || isTooSmall || isTooBig) {
             ctx.fillStyle = 'rgba(255,255,255,0.1)';
         } else {
@@ -2668,14 +3077,15 @@ function drawRec(obj) {
         }
         ctx.fillRect(x, y, gridStep - 1, gridStep - 1);
 
-
         if (self.getDrawOptions().label && self.getDrawOptions().label.show) {
-
             ctx.save();
             ctx.textBaseline = 'top';
             if (grids[i] !== 0 && !isTooSmall && !isTooBig) {
-                ctx.fillStyle = 'rgba(0,0,0,0.8)';
-                ctx.fillText(grids[i], x, y);
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                console.log(x + 10);
+                ctx.fillText(grids[i], parseInt(x) + gridStep / 2, parseInt(y) + gridStep / 2);
             }
             ctx.restore();
         }
@@ -2693,25 +3103,22 @@ function honeycombGrid(obj) {
 
     var grids = {};
 
-    var gridStep = size / zoomUnit;
+    var gridStep = _this.gridStep = size / zoomUnit;
 
-    var depthX = gridStep;
-    var depthY = gridStep * 3 / 4;
+    var depthX = _this.depthX = gridStep;
+    var depthY = _this.depthY = gridStep * 3 / 4;
 
     var sizeY = 2 * size * 3 / 4;
     var startYMc = parseInt(nwMc.y / sizeY + 1, 10) * sizeY;
     var startY = (nwMc.y - startYMc) / zoomUnit;
-    startY = parseInt(startY, 10);
+    startY = _this.startY = parseInt(startY, 10);
 
-    // var yIsOdd = !!(startYMc / sizeY % 2);
-
-    var sizeX = depthX * size;
-    var startXMc = parseInt(nwMc.x / sizeX, 10) * sizeX;
+    var startXMc = parseInt(nwMc.x / size, 10) * size;
     var startX = (startXMc - nwMc.x) / zoomUnit;
-    startX = parseInt(startX, 10);
+    startX = _this.startX = parseInt(startX, 10);
 
-    var endX = parseInt(ctx.canvas.width + sizeX / zoomUnit, 10);
-    var endY = parseInt(ctx.canvas.height + sizeY / zoomUnit, 10);
+    var endX = parseInt(ctx.canvas.width + depthX, 10);
+    var endY = parseInt(ctx.canvas.height + depthY, 10);
 
     var pointX = startX;
     var pointY = startY;
@@ -2766,7 +3173,6 @@ function honeycombGrid(obj) {
         max: max,
         min: min
     };
-
 }
 
 function drawHoneycomb(obj) {
@@ -2791,33 +3197,31 @@ function drawHoneycomb(obj) {
         level = level >= color.length ? color.length - 1 : level;
         level = level < 0 ? 0 : level;
         var useColor = obj.dataRange.getColorByGradient(count);
-        try{
-            if(options.opacity){
-                var alpha = parseInt(useColor.match(/rgba\(.+?\,.+?\,.+?\,(.+?)\)/)[1] * options.opacity)/255;
-                useColor = useColor.replace(/(rgba\(.+?\,.+?\,.+?\,).+?(\))/,'$1'+ alpha +'$2');
+        try {
+            if (options.opacity) {
+                var alpha = parseInt(useColor.match(/rgba\(.+?\,.+?\,.+?\,(.+?)\)/)[1] * options.opacity) / 255;
+                useColor = useColor.replace(/(rgba\(.+?\,.+?\,.+?\,).+?(\))/, '$1' + alpha + '$2');
             }
-        }catch(e){
+        } catch (e) {}
 
-        }
-        
         // console.log(useColor);
-        var isTooSmall = obj.sup.masker.min && (obj.sup.masker.min > count);
-        var isTooBig = obj.sup.masker.max && (obj.sup.masker.max < count);
+        var isTooSmall = obj.sup.masker.min && obj.sup.masker.min > count;
+        var isTooBig = obj.sup.masker.max && obj.sup.masker.max < count;
         if (count > 0 && !isTooSmall && !isTooBig) {
             draw(x, y, gridsW - 1, useColor, ctx);
         } else {
-            if(drowZero){
+            if (drowZero) {
                 draw(x, y, gridsW - 1, 'rgba(0,0,0,0.4)', ctx);
             }
         }
 
         // draw text
-        if (obj.sup.getDrawOptions().label &&  obj.sup.getDrawOptions().label.show && !isTooSmall && !isTooBig) {
-            if(!(count==0 && drowZero==false)){
+        if (obj.sup.getDrawOptions().label && obj.sup.getDrawOptions().label.show && !isTooSmall && !isTooBig) {
+            if (!(count == 0 && drowZero == false)) {
                 ctx.save();
                 ctx.textBaseline = 'middle';
                 ctx.textAlign = 'center';
-                ctx.fillStyle = 'rgba(0,0,0,0.8)';
+                ctx.fillStyle = 'rgba(255,255,255,0.8)';
                 ctx.fillText(count, x, y);
                 ctx.restore();
             }
@@ -2826,7 +3230,9 @@ function drawHoneycomb(obj) {
     // console.log(obj, step);
 }
 
-var r =0;g=0;b=0;
+var r = 0,
+    g = 0,
+    b = 0;
 function draw(x, y, gridStep, color, ctx) {
     ctx.beginPath();
     ctx.fillStyle = color;
@@ -2841,7 +3247,6 @@ function draw(x, y, gridStep, color, ctx) {
     ctx.closePath();
 }
 
-
 /**
  * format param
  * @return {[type]} [description]
@@ -2852,18 +3257,7 @@ function formatParam() {
     options = JSON.stringify(options);
     options = JSON.parse(options);
     // console.log(options)
-    var fillColors = this.fillColors = [
-        [73, 174, 34],
-        [119, 191, 26],
-        [160, 205, 18],
-        [202, 221, 10],
-        [248, 237, 1],
-        [225, 222, 3],
-        [254, 182, 10],
-        [254, 126, 19],
-        [254, 84, 27],
-        [253, 54, 32]
-    ];
+    var fillColors = this.fillColors = [[73, 174, 34], [119, 191, 26], [160, 205, 18], [202, 221, 10], [248, 237, 1], [225, 222, 3], [254, 182, 10], [254, 126, 19], [254, 84, 27], [253, 54, 32]];
 
     var size = options.size || '50';
     size = size + (options.unit || 'px');
@@ -2874,9 +3268,16 @@ function formatParam() {
     }
     options.size = size;
     options.colors = fillColors;
-    return options
+    return options;
 }
-;/* globals Drawer, util drawOptions map*/
+/**
+ * @file Heatmap Draw
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ */
+
+/* globals Drawer, util drawOptions map*/
+
+'use strict';
 
 function HeatmapDrawer() {
     var self = this;
@@ -2904,11 +3305,15 @@ HeatmapDrawer.prototype.drawMap = function () {
 
     this._width = ctx.canvas.width;
     this._height = ctx.canvas.height;
+
     var data = this.getLayer().getData();
     this._data = data;
-    console.time('drawHeatMap');
-    this.drawHeatmap();
-    console.timeEnd('drawHeatMap');
+
+    if (this._width > 0 && this._height > 0) {
+        console.time('drawHeatMap');
+        this.drawHeatmap();
+        console.timeEnd('drawHeatMap');
+    }
 
     this.endDrawMap();
 };
@@ -2939,11 +3344,11 @@ util.extend(HeatmapDrawer.prototype, {
         '1.0': 'red'
     },
 
-    getGradient: function () {
+    getGradient: function getGradient() {
         return this.getDrawOptions().gradient || this.defaultGradient;
     },
 
-    getMax: function () {
+    getMax: function getMax() {
         var max = this._max;
         if (this.getDrawOptions().max !== undefined) {
             max = this.getDrawOptions().max;
@@ -2954,38 +3359,41 @@ util.extend(HeatmapDrawer.prototype, {
         return max;
     },
 
-    data: function (data) {
-        this._data = data;
+    data: function data(_data) {
+        this._data = _data;
         return this;
     },
 
-    max: function (max) {
-        this._max = max;
+    max: function max(_max) {
+        this._max = _max;
         return this;
     },
 
-    add: function (point) {
+    add: function add(point) {
         this._data.push(point);
         return this;
     },
 
-    clear: function () {
+    clear: function clear() {
         this._data = [];
         return this;
     },
 
-    radius: function (r) {
-
-        if (this.getDrawOptions().shadowBlur !== undefined) {
-            var blur = parseFloat(this.getDrawOptions().shadowBlur);
-        } else {
-            var blur = 15;
-        }
+    radius: function radius(r) {
 
         // create a grayscale blurred circle image that we'll use for drawing points
         var circle = this._circle = document.createElement('canvas'),
-            ctx = circle.getContext('2d'),
-            r2 = this._r = r + blur;
+            ctx = circle.getContext('2d');
+
+        var shadowBlur = 0;
+
+        if (this.getDrawOptions().shadowBlur !== undefined) {
+            shadowBlur = parseFloat(this.getDrawOptions().shadowBlur);
+        } else {
+            shadowBlur = 0;
+        }
+
+        var r2 = this._r = r + shadowBlur;
 
         if (this.getDrawOptions().type === 'rect') {
             circle.width = circle.height = r2;
@@ -2993,13 +3401,23 @@ util.extend(HeatmapDrawer.prototype, {
             circle.width = circle.height = r2 * 2;
         }
 
-        var offsetDistance = 10000;
+        var offsetDistance;
+
+        if (this.getDrawOptions().shadowBlur !== undefined) {
+            ctx.shadowBlur = shadowBlur;
+            ctx.shadowColor = 'black';
+            offsetDistance = 10000;
+        } else {
+            offsetDistance = 0;
+
+            var grad = ctx.createRadialGradient(r2 - offsetDistance, r2 - offsetDistance, 0, r2 - offsetDistance, r2 - offsetDistance, r);
+            /* 设定各个位置的颜色 */
+            grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
+            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = grad;
+        }
 
         ctx.shadowOffsetX = ctx.shadowOffsetY = offsetDistance;
-
-        ctx.shadowBlur = blur;
-
-        ctx.shadowColor = 'black';
 
         ctx.beginPath();
         if (this.getDrawOptions().type === 'rect') {
@@ -3013,7 +3431,7 @@ util.extend(HeatmapDrawer.prototype, {
         return this;
     },
 
-    drawHeatmap: function (minOpacity) {
+    drawHeatmap: function drawHeatmap(minOpacity) {
         // if (!this._circle) {
         this.radius(this.getRadius());
         // }
@@ -3026,8 +3444,9 @@ util.extend(HeatmapDrawer.prototype, {
         // console.log(this.masker)
         // draw a grayscale heatmap by putting a blurred circle at each data point
         var dataType = this.getLayer().getDataType();
+        var max = this.getMax();
         if (dataType === 'polyline') {
-            ctx.strokeStyle = this.getDrawOptions().strokeStyle || 'rgba(0, 0, 0, 0.05)';
+            ctx.strokeStyle = this.getDrawOptions().strokeStyle || 'rgba(0, 0, 0, 0.8)';
 
             /*
             ctx.shadowOffsetX = ctx.shadowOffsetY = 0;
@@ -3036,28 +3455,29 @@ util.extend(HeatmapDrawer.prototype, {
             */
 
             ctx.lineWidth = this.getDrawOptions().lineWidth || 1;
+            ctx.beginPath();
             for (var i = 0, len = this._data.length; i < len; i++) {
                 p = this._data[i];
                 var geo = p.pgeo;
+                ctx.beginPath();
                 ctx.moveTo(geo[0][0], geo[0][1]);
                 for (var j = 1; j < geo.length; j++) {
                     ctx.lineTo(geo[j][0], geo[j][1]);
                 }
+                ctx.globalAlpha = Math.max(p.count / max, minOpacity === undefined ? 0.05 : minOpacity);
+                ctx.stroke();
             }
-            ctx.stroke();
-
         } else {
 
-            var boundary = this.getDrawOptions().boundary || 50;
+            var boundary = this.getDrawOptions().boundary || this._circle.width + 50;
 
             console.time('drawImageData');
             console.log('data', this._data.length, this._data);
-            var max = this.getMax();
             for (var i = 0, len = this._data.length, p; i < len; i++) {
                 p = this._data[i];
-                if (p.px < -boundary || p.py < -boundary || p.px > ctx.canvas.width + boundary || p.py > ctx.canvas.height + boundary) {
-                    continue;
-                }
+                if (p.px < -boundary || p.py < -boundary || p.px > ctx.canvas.width + boundary || p.py > ctx.canvas.height + boundary) {}
+                //continue;
+
                 // if (p.count < this.masker.min || p.count > this.masker.max) {
                 //     continue;
                 // }
@@ -3070,6 +3490,7 @@ util.extend(HeatmapDrawer.prototype, {
 
         // colorize the heatmap, using opacity value of each pixel to get the right color from our gradient
         // console.log( this._width, this._height)
+
         var colored = ctx.getImageData(0, 0, this._width, this._height);
         console.time('colorize');
         this.colorize(colored.data, this.dataRange.getGradient());
@@ -3080,7 +3501,7 @@ util.extend(HeatmapDrawer.prototype, {
         return this;
     },
 
-    colorize: function (pixels, gradient) {
+    colorize: function colorize(pixels, gradient) {
         var jMin = 0;
         var jMax = 1024;
         if (this.masker.min) {
@@ -3109,7 +3530,14 @@ util.extend(HeatmapDrawer.prototype, {
         }
     }
 });
-;/* globals Drawer, util */
+/**
+ * @file 按渐变颜色分类绘制方法
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ */
+
+/* globals Drawer, util */
+
+'use strict';
 
 function IntensityDrawer() {
     this.masker = {
@@ -3145,7 +3573,6 @@ IntensityDrawer.prototype.drawMap = function () {
 
     ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-
     var data = this.getLayer().getData();
     var drawOptions = this.getDrawOptions();
     ctx.strokeStyle = drawOptions.strokeStyle;
@@ -3167,14 +3594,14 @@ IntensityDrawer.prototype.drawMap = function () {
         }
     }
 
-    if (dataType === 'polygon') {
+    if (dataType === 'polygon' || dataType === 'polyline') {
 
         for (var i = 0, len = data.length; i < len; i++) {
             var item = data[i];
             var geo = item.pgeo;
 
-            var isTooSmall = self.masker.min && (item.count < self.masker.min);
-            var isTooBig = self.masker.max && (item.count > self.masker.max);
+            var isTooSmall = self.masker.min && item.count < self.masker.min;
+            var isTooBig = self.masker.max && item.count > self.masker.max;
             if (isTooSmall || isTooBig) {
                 continue;
             }
@@ -3185,10 +3612,16 @@ IntensityDrawer.prototype.drawMap = function () {
             for (var j = 1; j < geo.length; j++) {
                 ctx.lineTo(geo[j][0], geo[j][1]);
             }
-            ctx.closePath();
-            ctx.fill();
 
-            if (drawOptions.strokeStyle) {
+            if (dataType == 'polygon') {
+                ctx.closePath();
+                ctx.fill();
+            }
+
+            if (dataType == 'polyline') {
+                ctx.strokeStyle = this.dataRange.getColorByGradient(data[i].count);
+                ctx.stroke();
+            } else if (drawOptions.strokeStyle) {
                 ctx.stroke();
             }
 
@@ -3200,8 +3633,7 @@ IntensityDrawer.prototype.drawMap = function () {
                 ctx.fillText(data[i].count, center[0], center[1]);
             }
         }
-
-    } else { 
+    } else {
 
         // 画点数据
         for (var i = 0, len = data.length; i < len; i++) {
@@ -3209,8 +3641,8 @@ IntensityDrawer.prototype.drawMap = function () {
             if (item.px < 0 || item.px > ctxW || item.py < 0 || item.py > ctxH) {
                 continue;
             }
-            var isTooSmall = self.masker.min && (item.count < self.masker.min);
-            var isTooBig = self.masker.max && (item.count > self.masker.max);
+            var isTooSmall = self.masker.min && item.count < self.masker.min;
+            var isTooBig = self.masker.max && item.count > self.masker.max;
             if (isTooSmall || isTooBig) {
                 continue;
             }
@@ -3221,7 +3653,6 @@ IntensityDrawer.prototype.drawMap = function () {
             ctx.closePath();
             ctx.fill();
         }
-
     }
 
     window.console.timeEnd('drawMap');
@@ -3235,7 +3666,7 @@ IntensityDrawer.prototype.drawMap = function () {
 
 IntensityDrawer.prototype.getGradient = function () {
     return this.getDrawOptions().gradient || this.defaultGradient;
-}
+};
 
 IntensityDrawer.prototype.scale = function (scale) {
     var self = this;
@@ -3260,41 +3691,330 @@ IntensityDrawer.prototype.getMax = function () {
     }
     return max;
 };
-;function SimpleDrawer() {
+/**
+ * @file 普通的绘制方式
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ */
+
+'use strict';
+
+function LineDrawer() {
+    Drawer.apply(this, arguments);
+}
+
+util.inherits(LineDrawer, Drawer);
+
+LineDrawer.prototype.drawMap = function (time) {
+    this.beginDrawMap();
+    var self = this;
+    var ctx = this.getCtx();
+
+    // TODO: use workder
+    var data = this.getLayer().getData();
+
+    var map = this.getMapv().getMap();
+    var zoom = map.getZoom();
+    var zoomUnit = this.zoomUnit = Math.pow(2, 18 - zoom);
+
+    var param = formatParam.call(this);
+    var size = param.size;
+
+    var mercatorProjection = map.getMapType().getProjection();
+    var mcCenter = mercatorProjection.lngLatToPoint(map.getCenter());
+    var nwMcX = mcCenter.x - map.getSize().width / 2 * zoomUnit;
+    var nwMc = new BMap.Pixel(nwMcX, mcCenter.y + map.getSize().height / 2 * zoomUnit);
+
+    // var grids = recGrids();
+    // drawRec(grids);
+    // var grids = {};
+    // var gridStep = size / zoomUnit;
+    // var startXMc = parseInt(nwMc.x / size, 10) * size;
+    // var startX = (startXMc - nwMc.x) / zoomUnit;
+
+    // var stockXA = [];
+    // var stickXAIndex = 0;
+    // while ((startX + stickXAIndex * gridStep) < map.getSize().width) {
+    //     var value = startX + stickXAIndex * gridStep;
+    //     stockXA.push(value.toFixed(2));
+    //     stickXAIndex++;
+    // }
+
+    // var startYMc = parseInt(nwMc.y / size, 10) * size + size;
+    // var startY = (nwMc.y - startYMc) / zoomUnit;
+    // var stockYA = [];
+    // var stickYAIndex = 0;
+    // while ((startY + stickYAIndex * gridStep) < map.getSize().height) {
+    //     value = startY + stickYAIndex * gridStep;
+    //     stockYA.push(value.toFixed(2));
+    //     stickYAIndex++;
+    // }
+
+    // for (var i = 0; i < stockXA.length; i++) {
+    //     for (var j = 0; j < stockYA.length; j++) {
+    //         var name = stockXA[i] + '_' + stockYA[j];
+    //         grids[name] = 0;
+    //     }
+    // }
+    // console.log(grids);
+
+    // var map = this.getMapv().getMap();
+    // var zoom = map.getZoom();
+    // var zoomUnit = this.zoomUnit = Math.pow(2, 18 - zoom);
+    // var mercatorProjection = map.getMapType().getProjection();
+    // var mcCenter = mercatorProjection.lngLatToPoint(map.getCenter());
+    // var mcLeft = mcCenter.x - (map.getSize().width / 2) * zoomUnit;
+    // var mcTop = mcCenter.y + (map.getSize().height / 2) * zoomUnit;
+    // var mcLeftTop = new BMap.Pixel(mcLeft, mcTop);
+
+    // // grade
+    // var startMcXD = mcLeftTop.x - parseInt(mcLeftTop.x / 100) * 100;
+    // var startMcYD = mcLeftTop.y - parseInt(mcLeftTop.y / 100) * 100;
+    // console.log(startMcXD, startMcYD)
+    // ctx.fillStyle = 'rgba(0,0,0,0.6)';
+    // var gradeBorder = 100;
+    // for (var i = -startMcYD; i < gradeBorder + map.getSize().height; i += gradeBorder) {
+    //     for (var j = -startMcXD; j < gradeBorder + map.getSize().width; j += gradeBorder) {
+
+    //         ctx.fillRect(i, j, gradeBorder - 1, gradeBorder - 1)
+    //     }
+    // }
+
+    ctx.globalCompositeOperation = 'lighter';
+    ctx.strokeStyle = 'rgba(100,100,10,0.4)';
+    ctx.lineWidth = 0.8;
+    for (var i = 0, len = data.length; i < len; i++) {
+        ctx.beginPath();
+        var pgeo = data[i].pgeo;
+        ctx.moveTo(pgeo[0][0], pgeo[0][1]);
+        for (var j = 1; j < pgeo.length; j++) {
+            if (pgeo[j][0] < -100 && pgeo[j][1] < -100) {
+                continue;
+            }
+            ctx.lineTo(pgeo[j][0], pgeo[j][1]);
+        }
+        // ctx.closePath();
+        ctx.stroke();
+        // break;
+    }
+
+    this.endDrawMap();
+
+    function recGrids() {
+        // var data = obj.data;
+        // var nwMc = obj.nwMc;
+        var size = 10;
+        // var zoomUnit = obj.zoomUnit;
+        var max;
+        var min;
+
+        var grids = {};
+
+        // var gridStep = size / zoomUnit;
+        var gridStep = size;
+
+        var startXMc = parseInt(nwMc.x / size, 10) * size;
+
+        var startX = (startXMc - nwMc.x) / zoomUnit;
+
+        var stockXA = [];
+        var stickXAIndex = 0;
+        while (startX + stickXAIndex * gridStep < map.getSize().width) {
+            var value = startX + stickXAIndex * gridStep;
+            stockXA.push(value.toFixed(2));
+            stickXAIndex++;
+        }
+
+        var startYMc = parseInt(nwMc.y / size, 10) * size + size;
+        var startY = (nwMc.y - startYMc) / zoomUnit;
+        var stockYA = [];
+        var stickYAIndex = 0;
+        while (startY + stickYAIndex * gridStep < map.getSize().height) {
+            value = startY + stickYAIndex * gridStep;
+            stockYA.push(value.toFixed(2));
+            stickYAIndex++;
+        }
+
+        for (var i = 0; i < stockXA.length; i++) {
+            for (var j = 0; j < stockYA.length; j++) {
+                var name = stockXA[i] + '_' + stockYA[j];
+                grids[name] = 0;
+            }
+        }
+
+        for (var i = 0; i < data.length; i++) {
+            var pgeos = data[i].pgeo;
+            for (var geoIndex in pgeos) {
+                var x = pgeos[geoIndex][0];
+                var y = pgeos[geoIndex][1];
+                var val = parseInt(data[i].count, 10);
+                var isSmallX = x < stockXA[0];
+                var isSmallY = y < stockYA[0];
+                var isBigX = x > Number(stockXA[stockXA.length - 1]) + Number(gridStep);
+                var isBigY = y > Number(stockYA[stockYA.length - 1]) + Number(gridStep);
+                if (isSmallX || isSmallY || isBigX || isBigY) {
+                    continue;
+                }
+                for (var j = 0; j < stockXA.length; j++) {
+                    var dataX = Number(stockXA[j]);
+                    if (x >= dataX && x < dataX + gridStep) {
+                        for (var k = 0; k < stockYA.length; k++) {
+                            var dataY = Number(stockYA[k]);
+                            if (y >= dataY && y < dataY + gridStep) {
+                                grids[stockXA[j] + '_' + stockYA[k]] += val;
+                                val = grids[stockXA[j] + '_' + stockYA[k]];
+                                pgeos[geoIndex][0] = stockXA[j];
+                                pgeos[geoIndex][1] = stockYA[k];
+                            }
+                        }
+                    }
+                }
+                min = min || val;
+                max = max || val;
+                min = min > val ? val : min;
+                max = max < val ? val : max;
+            }
+        }
+
+        return {
+            grids: grids,
+            max: max,
+            min: min
+        };
+    }
+
+    function drawRec(grids) {
+        console.log(grids);
+        for (var i in grids.grids) {
+            var sp = i.split('_');
+            var x = sp[0];
+            var y = sp[1];
+            // ctx.beginPath();
+            // ctx.fillStyle = "blue";
+            // ctx.arc(x, y, 1, 0, 2 * Math.PI);
+            // ctx.fill();
+        }
+    }
+};
+/**
+ * @file 普通的绘制方式
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ */
+
+'use strict';
+
+function SimpleDrawer() {
     Drawer.apply(this, arguments);
 }
 
 util.inherits(SimpleDrawer, Drawer);
 
-SimpleDrawer.prototype.drawMap = function () {
+SimpleDrawer.prototype.drawMap = function (time) {
+    var dataType = this.getLayer().getDataType();
     if (this.getLayer().getContext() === 'webgl') {
-        this.drawWebglMap();
+        if (dataType === 'polyline') {
+            // 画线
+            this.drawWebglPolyline();
+        } else {
+            this.drawWebglPoint();
+        }
         return;
     }
 
     this.beginDrawMap();
 
     var data = this.getLayer().getData();
-
     var ctx = this.getCtx();
-
     var drawOptions = this.getDrawOptions();
-    console.log('????',drawOptions)
 
     ctx.beginPath();
 
     var radius = this.getRadius();
 
-    var dataType = this.getLayer().getDataType();
+    if (dataType === 'polyline') {
+        // 画线或面
 
-    if (dataType === 'polyline' || dataType === 'polygon') { // 画线或面
+        var label = drawOptions.label;
+        var zoom = this.getMap().getZoom();
+        var zoomUnit = Math.pow(2, 18 - zoom);
 
+        var arrowWidth = (10 + this.getDrawOptions().lineWidth) / zoomUnit;
+
+        if (label) {
+            if (label.font) {
+                ctx.font = label.font;
+            }
+            var labelKey = label.key || 'count';
+        }
+
+        var animationOptions = this.getLayer().getAnimationOptions() || {};
         for (var i = 0, len = data.length; i < len; i++) {
             var geo = data[i].pgeo;
+            var startIndex = 0,
+                //开始的索引
+            endIndex = geo.length - 1; //结束的索引
+
+            if (time) {
+                // 按时间动画展示
+                var scope = animationOptions.scope || 60 * 60 * 3;
+                for (var j = 0; j < geo.length; j++) {
+                    if (parseFloat(geo[j][2]) < time - scope) {
+                        startIndex = j;
+                    }
+                    endIndex = j;
+                    if (parseFloat(geo[j][2]) > time) {
+                        break;
+                    }
+                }
+            }
+
+            if (startIndex >= endIndex) {
+                continue;
+            }
+
             ctx.beginPath();
-            ctx.moveTo(geo[0][0], geo[0][1]);
-            for (var j = 1; j < geo.length; j++) {
+            ctx.lineWidth = this.getDrawOptions().lineWidth || 1;
+            ctx.moveTo(geo[startIndex][0], geo[startIndex][1]);
+            for (var j = startIndex + 1; j <= endIndex; j++) {
                 ctx.lineTo(geo[j][0], geo[j][1]);
+            }
+
+            if (drawOptions.strokeStyle || dataType === 'polyline') {
+                ctx.stroke();
+                ctx.closePath();
+            }
+
+            ctx.beginPath();
+            ctx.moveTo(geo[startIndex][0], geo[startIndex][1]);
+            var skip = parseInt(zoomUnit);
+            skip = Math.max(skip, 1);
+            ctx.lineWidth = 1;
+            for (var j = startIndex + 1; j <= endIndex; j += skip) {
+                if (drawOptions.arrow) {
+                    ctx.save();
+                    var vLine = [geo[j][0] - geo[j - 1][0], geo[j - 1][1] - geo[j][1]];
+                    var vLineDot = vLine[1];
+                    var vLineLen = Math.sqrt(vLine[0] * vLine[0] + vLine[1] * vLine[1], 2);
+                    var val = vLineDot / vLineLen;
+                    // //
+                    var rad = Math.acos(val);
+                    if (vLine[0] < 0) {
+                        rad = -rad;
+                    }
+                    if (rad) {
+                        arrowWidth = Math.max(arrowWidth, 5);
+                        var center = [(geo[j][0] - geo[j - 1][0]) / 2, (geo[j][1] - geo[j - 1][1]) / 2];
+
+                        ctx.translate(geo[j][0], geo[j][1]);
+                        ctx.rotate(rad);
+                        ctx.moveTo(arrowWidth, arrowWidth);
+                        ctx.lineTo(0, 0);
+                        ctx.moveTo(-arrowWidth, arrowWidth);
+                        ctx.lineTo(0, 0);
+                        ctx.translate(-geo[j][0], -geo[j][1]);
+                        ctx.moveTo(geo[j][0], geo[j][1]);
+                    }
+                    ctx.restore();
+                }
             }
 
             if (drawOptions.strokeStyle || dataType === 'polyline') {
@@ -3306,87 +4026,154 @@ SimpleDrawer.prototype.drawMap = function () {
                 ctx.fill();
             }
 
-        }
-
-
-    } else { // 画点
-
-        if (drawOptions.strokeStyle || drawOptions.globalCompositeOperation) {
-            // 圆描边或设置颜色叠加方式需要一个个元素进行绘制
-            for (var i = 0, len = data.length; i < len; i++) {
-                var item = data[i];
-                if (item.px < 0 || item.px > ctx.canvas.width || item.py < 0 || item > ctx.canvas.height) {
-                    continue;
+            if (label && label.show && (!label.minZoom || label.minZoom && zoom >= label.minZoom)) {
+                ctx.save();
+                if (label.fillStyle) {
+                    ctx.fillStyle = label.fillStyle;
                 }
+                var center = util.getGeoCenter(geo);
+                ctx.fillText(data[i][labelKey], center[0], center[1]);
+                ctx.restore();
+            }
+            // break;
+        }
+    } else if (dataType === 'polygon') {
+            // 画线或面
+            for (var i = 0, len = data.length; i < len; i++) {
+                var geo = data[i].pgeo;
                 ctx.beginPath();
-                ctx.moveTo(item.px, item.py);
-                ctx.arc(item.px, item.py, radius, 0, 2 * Math.PI, false);
+                ctx.moveTo(geo[0][0], geo[0][1]);
+                for (var j = 1; j < geo.length; j++) {
+                    ctx.lineTo(geo[j][0], geo[j][1]);
+                }
+                ctx.closePath();
                 ctx.fill();
                 if (drawOptions.strokeStyle) {
                     ctx.stroke();
                 }
             }
-
         } else {
-            //普通填充可一起绘制路径，最后再统一填充，性能上会好点
-            for (var i = 0, len = data.length; i < len; i++) {
-                var item = data[i];
-                if (item.px < 0 || item.px > ctx.canvas.width || item.py < 0 || item > ctx.canvas.height) {
-                    continue;
-                }
-                ctx.moveTo(item.px, item.py);
-                if (radius < 2) {
-                    ctx.fillRect(item.px, item.py, radius * 2, radius * 2);
-                } else {
-                    ctx.arc(item.px, item.py, radius, 0, 2 * Math.PI, false);
-                }
-            }
+            // 画点
 
-            ctx.fill();
+            var icon = drawOptions.icon;
+
+            if (drawOptions.strokeStyle || drawOptions.globalCompositeOperation) {
+                // 圆描边或设置颜色叠加方式需要一个个元素进行绘制
+                for (var i = 0, len = data.length; i < len; i++) {
+                    var item = data[i];
+                    if (item.px < 0 || item.px > ctx.canvas.width || item.py < 0 || item > ctx.canvas.height) {
+                        continue;
+                    }
+                    ctx.beginPath();
+                    ctx.moveTo(item.px, item.py);
+                    if (icon && icon.show && icon.url) {
+                        this.drawIcon(ctx, item, icon);
+                    } else {
+                        ctx.arc(item.px, item.py, radius, 0, 2 * Math.PI, false);
+                        ctx.fill();
+                    }
+                    if (drawOptions.strokeStyle) {
+                        ctx.stroke();
+                    }
+                }
+            } else {
+                //普通填充可一起绘制路径，最后再统一填充，性能上会好点
+                for (var i = 0, len = data.length; i < len; i++) {
+                    var item = data[i];
+                    if (item.px < 0 || item.px > ctx.canvas.width || item.py < 0 || item > ctx.canvas.height) {
+                        continue;
+                    }
+                    ctx.moveTo(item.px, item.py);
+                    if (icon && icon.show && icon.url) {
+                        this.drawIcon(ctx, item, icon);
+                    } else {
+                        if (radius < 2) {
+                            ctx.fillRect(item.px, item.py, radius * 2, radius * 2);
+                        } else {
+                            ctx.arc(item.px, item.py, radius, 0, 2 * Math.PI, false);
+                        }
+                    }
+                }
+
+                ctx.fill();
+            }
         }
 
-    }
-
     this.endDrawMap();
-}
+};
+
+// 绘制icon
+SimpleDrawer.prototype.drawIcon = function (ctx, item, icon) {
+    var image = new Image();
+    var sx = icon.sx || 0;
+    var sy = icon.sy || 0;
+    var px = icon.px || 0;
+    var py = icon.py || 0;
+    var swidth = icon.swidth || 0;
+    var sheight = icon.sheight || 0;
+    var width = icon.width || 0;
+    var height = icon.height || 0;
+    (function (item, sx, sy, swidth, sheight, width, height) {
+        image.onload = function () {
+            var pixelRatio = util.getPixelRatio(ctx);
+            ctx.save();
+            ctx.scale(pixelRatio, pixelRatio);
+            ctx.drawImage(image, sx, sy, swidth, sheight, item.px - width / 2 - px, item.py - height / 2 - py, width, height);
+            ctx.restore();
+        };
+    })(item, sx, sy, swidth, sheight, width, height);
+    image.src = icon.url;
+};
 
 /**
  * 绘制动画
  */
 SimpleDrawer.prototype.drawAnimation = function () {
-    var data = this.getLayer().getData();
-    var dataType = this.getLayer().getDataType();
-    var animationOptions = this.getLayer().getAnimationOptions();
-    var ctx = this.getLayer().getAnimationCtx();
+    var layer = this.getLayer();
+    var data = layer.getData();
+    var dataType = layer.getDataType();
+    var animationOptions = layer.getAnimationOptions();
+    var animation = layer.getAnimation();
+    var ctx = layer.getAnimationCtx();
 
     if (dataType === 'polyline') {
-        for (var i = 0, len = data.length; i < len; i++) {
-            var index = data[i].index;
-            var pgeo = data[i].pgeo;
+        if (animation === 'time') {} else {
+            var step = animationOptions.step || 1;
+            var size = animationOptions.size || 1;
+            for (var i = 0, len = data.length; i < len; i += step) {
+                var index = data[i].index;
+                var pgeo = data[i].pgeo;
 
-            /* 设定渐变区域 */
-            var x = pgeo[index][0];
-            var y = pgeo[index][1];
-            var grad  = ctx.createRadialGradient(x, y, 0, x, y, animationOptions.size);
-            grad.addColorStop(0,'rgba(255, 255, 255, 1)');
-            grad.addColorStop(0.4,'rgba(255, 255, 255, 0.9)');
-            grad.addColorStop(1,'rgba(255, 255, 255, 0)');
-            ctx.fillStyle = grad;
+                var pixelRatio = util.getPixelRatio(ctx);
+                ctx.save();
+                ctx.scale(pixelRatio, pixelRatio);
 
-            ctx.beginPath();
-            ctx.arc(x, y, animationOptions.size, 0, 2 * Math.PI, false);
-            ctx.closePath();
-            ctx.fill();
-            data[i].index++;
-            if (data[i].index >= data[i].pgeo.length) {
-                data[i].index = 0;
+                /* 设定渐变区域 */
+                var x = pgeo[index][0];
+                var y = pgeo[index][1];
+                var grad = ctx.createRadialGradient(x, y, 0, x, y, size);
+                grad.addColorStop(0, 'rgba(255, 255, 255, 1)');
+                grad.addColorStop(0.4, 'rgba(255, 255, 255, 0.9)');
+                grad.addColorStop(1, 'rgba(255, 255, 255, 0)');
+                ctx.fillStyle = animationOptions.fillStyle || grad;
+
+                ctx.beginPath();
+                ctx.arc(x, y, size, 0, 2 * Math.PI, false);
+                ctx.closePath();
+                ctx.fill();
+                data[i].index++;
+                if (data[i].index >= data[i].pgeo.length) {
+                    data[i].index = 0;
+                }
+
+                ctx.restore();
             }
         }
     }
-}
+};
 
 // 使用webgl来绘点，支持更大数据量的点
-SimpleDrawer.prototype.drawWebglMap = function () {
+SimpleDrawer.prototype.drawWebglPoint = function () {
 
     var data = this.getLayer().getData();
 
@@ -3401,22 +4188,9 @@ SimpleDrawer.prototype.drawWebglMap = function () {
     vs = gl.createShader(gl.VERTEX_SHADER);
     fs = gl.createShader(gl.FRAGMENT_SHADER);
 
-    vs_s = [
-        'attribute vec4 a_Position;',
-        'attribute float a_PointSize;',
-        'void main() {',
-            'gl_Position = a_Position;',
-            'gl_PointSize = a_PointSize;',
-        '}'
-    ].join('');
+    vs_s = ['attribute vec4 a_Position;', 'attribute float a_PointSize;', 'void main() {', 'gl_Position = a_Position;', 'gl_PointSize = a_PointSize;', '}'].join('');
 
-    fs_s = [
-        'precision mediump float;',
-        'uniform vec4 u_FragColor;',
-        'void main() {',
-            'gl_FragColor = u_FragColor;',
-        '}'
-    ].join('');
+    fs_s = ['precision mediump float;', 'uniform vec4 u_FragColor;', 'void main() {', 'gl_FragColor = u_FragColor;', '}'].join('');
 
     var program = gl.createProgram();
     gl.shaderSource(vs, vs_s);
@@ -3470,11 +4244,6 @@ SimpleDrawer.prototype.drawWebglMap = function () {
     // Write date into the buffer object
     gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-    var a_Position = gl.getAttribLocation(program, 'a_Position');
-    if (a_Position < 0) {
-        console.log('Failed to get the storage location of a_Position');
-        return -1;
-    }
     // Assign the buffer object to a_Position variable
     gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
 
@@ -3491,13 +4260,417 @@ SimpleDrawer.prototype.drawWebglMap = function () {
     tmpCtx.fillRect(0, 0, 1, 1);
     var colored = tmpCtx.getImageData(0, 0, 1, 1).data;
 
-    gl.uniform4f(uFragColor,
-    colored[0] / 255,
-    colored[1] / 255,
-    colored[2] / 255,
-    colored[3] / 255);
-    gl.drawArrays(gl.POINTS, 0 , n);
+    gl.uniform4f(uFragColor, colored[0] / 255, colored[1] / 255, colored[2] / 255, colored[3] / 255);
+    gl.drawArrays(gl.POINTS, 0, n);
+};
+
+// 使用webgl来绘线，支持更大数据量的线
+SimpleDrawer.prototype.drawWebglPolyline = function () {
+    var data = this.getLayer().getData();
+
+    if (!data) {
+        return;
+    }
+
+    var gl = this.getCtx();
+
+    var vs, fs, vs_s, fs_s;
+
+    vs = gl.createShader(gl.VERTEX_SHADER);
+    fs = gl.createShader(gl.FRAGMENT_SHADER);
+
+    vs_s = ['attribute vec4 a_Position;', 'void main() {', 'gl_Position = a_Position;', 'gl_PointSize = 30.0;', '}'].join('');
+
+    fs_s = ['precision mediump float;', 'uniform vec4 u_FragColor;', 'void main() {', 'gl_FragColor = u_FragColor;', '}'].join('');
+
+    var program = gl.createProgram();
+    gl.shaderSource(vs, vs_s);
+    gl.compileShader(vs);
+    gl.shaderSource(fs, fs_s);
+    gl.compileShader(fs);
+    gl.attachShader(program, vs);
+    gl.attachShader(program, fs);
+    gl.linkProgram(program);
+    gl.useProgram(program);
+
+    gl.enable(gl.BLEND);
+    gl.blendFunc(gl.SRC_ALPHA, gl.ONE);
+
+    //gl.clearColor(0.0, 0.0, 1.0, 1.0);
+    gl.clear(gl.COLOR_BUFFER_BIT);
+
+    var halfCanvasWidth = gl.canvas.width / 2;
+    var halfCanvasHeight = gl.canvas.height / 2;
+
+    // Create a buffer object
+    var vertexBuffer = gl.createBuffer();
+    // Bind the buffer object to target
+    gl.bindBuffer(gl.ARRAY_BUFFER, vertexBuffer);
+
+    var a_Position = gl.getAttribLocation(program, 'a_Position');
+    // Assign the buffer object to a_Position variable
+    gl.vertexAttribPointer(a_Position, 2, gl.FLOAT, false, 0, 0);
+
+    // Enable the assignment to a_Position variable
+    gl.enableVertexAttribArray(a_Position);
+
+    var uFragColor = gl.getUniformLocation(program, 'u_FragColor');
+
+    var tmpCanvas = document.createElement('canvas');
+    var tmpCtx = tmpCanvas.getContext('2d');
+    tmpCanvas.width = 1;
+    tmpCanvas.height = 1;
+    tmpCtx.fillStyle = this.getDrawOptions().strokeStyle || 'red';
+    tmpCtx.fillRect(0, 0, 1, 1);
+    var colored = tmpCtx.getImageData(0, 0, 1, 1).data;
+
+    gl.uniform4f(uFragColor, colored[0] / 255, colored[1] / 255, colored[2] / 255, colored[3] / 255);
+
+    gl.lineWidth(this.getDrawOptions().lineWidth || 1);
+
+    for (var i = 0, len = data.length; i < len; i++) {
+        var geo = data[i].pgeo;
+
+        var verticesData = [];
+
+        for (var j = 0; j < geo.length; j++) {
+            var item = geo[j];
+
+            var x = (item[0] - halfCanvasWidth) / halfCanvasWidth;
+            var y = (halfCanvasHeight - item[1]) / halfCanvasHeight;
+            verticesData.push(x, y);
+        }
+        var vertices = new Float32Array(verticesData);
+        // Write date into the buffer object
+        gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+        gl.drawArrays(gl.LINE_STRIP, 0, geo.length);
+    }
+};
+/**
+ * @file 普通的绘制方式
+ * @author nikai (@胖嘟嘟的骨头, nikai@baidu.com)
+ */
+
+'use strict';
+
+function TrafficDrawer() {
+    Drawer.apply(this, arguments);
+
+    this.init();
 }
-;    Mapv.Layer = Layer;
-    this.Mapv = Mapv;
+
+util.inherits(TrafficDrawer, Drawer);
+
+TrafficDrawer.prototype.init = function () {
+    var self = this;
+
+    // console.log(road)
+    this.roads = [];
+
+    // 12964452.6,4825152.43;12966219.7,4825295.53;
+    this.roads = [{
+        start: {
+            x: 12965318.12,
+            y: 4825216.47
+        },
+        end: {
+            x: 12964456.16,
+            y: 4825151.56
+        },
+        speed: Math.random() * 5000 + 1500
+    }, {
+        start: {
+            x: 12964456.16,
+            y: 4825131.47
+        },
+        end: {
+            x: 12965318.12,
+            y: 4825197.53
+        },
+        speed: Math.random() * 5000 + 1500
+    }, {
+        start: {
+            x: 12966199,
+            y: 4825292
+        },
+        end: {
+            x: 12965342.16,
+            y: 4825218.49
+        },
+        speed: Math.random() * 5000 + 1500
+    }, {
+        start: {
+            x: 12965342.2,
+            y: 4825202.55
+        },
+        end: {
+            x: 12966206.16,
+            y: 4825266.53
+        },
+        speed: Math.random() * 5000 + 1500
+    }, {
+        start: {
+            x: 12965318.2,
+            y: 4825196.55
+        },
+        end: {
+            x: 12965308.16,
+            y: 4824642.53
+        },
+        speed: Math.random() * 5000 + 1500
+    }, {
+        start: {
+            x: 12965331.2,
+            y: 4824648.55
+        },
+        end: {
+            x: 12965340.16,
+            y: 4825202.53
+        },
+        speed: Math.random() * 5000 + 1500
+    }, {
+        start: {
+            x: 12965341.2,
+            y: 4825219.55
+        },
+        end: {
+            x: 12965351.16,
+            y: 4825769.53
+        },
+        speed: Math.random() * 5000 + 1500
+    }, {
+        start: {
+            x: 12965323.2,
+            y: 4825769.55
+        },
+        end: {
+            x: 12965319.16,
+            y: 4825217.53
+        },
+        speed: Math.random() * 5000 + 1500
+    }, {
+        start: {
+            x: 12965355.2,
+            y: 4825769.55
+        },
+        end: {
+            x: 12966360.16,
+            y: 4825764.53
+        },
+        speed: Math.random() * 5000 + 1500
+    }, {
+        start: {
+            x: 12966358.2,
+            y: 4825796.55
+        },
+        end: {
+            x: 12965353.16,
+            y: 4825802.53
+        },
+        speed: Math.random() * 5000 + 1500
+    }, {
+        start: {
+            x: 12965320.2,
+            y: 4825798.55
+        },
+        end: {
+            x: 12964270.16,
+            y: 4825809.53
+        },
+        speed: Math.random() * 5000 + 1500
+    }, {
+        start: {
+            x: 12964265.2,
+            y: 4825789.55
+        },
+        end: {
+            x: 12965324.16,
+            y: 4825767.53
+        },
+        speed: Math.random() * 5000 + 1500
+    }];
+    //12964265.13,4825789.47;12965324.13,4825767.5
+    //12965320.12,4825798.43;12964270.14,4825809.42
+    //12966358.19,4825796.56;12965353.18,4825802.48
+    // 12965355.19,4825769.52;12966360.19,4825764.46
+    // for (var i in road) {
+    //     for (var j = 1; j < road[i].length; j++) {
+
+    //         this.roads.push({
+    //             start: {
+    //                 x: road[i][j - 1][0],
+    //                 y: road[i][j - 1][1]
+    //             },
+    //             end: {
+    //                 x: road[i][j][0],
+    //                 y: road[i][j][1]
+    //             },
+    //             speed: Math.random() * 2000 + 1000
+    //         })
+    //     }
+    // }
+
+    var canvas = window.canvas = this.getCtx().canvas;
+    var width = canvas.width;
+    var height = canvas.height;
+    var content = canvas.parentElement;
+
+    var scene = this.scene = new THREE.Scene();
+    var camera = new THREE.OrthographicCamera(width / -2, width / 2, height / 2, height / -2, 1, 1000);
+
+    var renderer = new THREE.WebGLRenderer({
+        canvas: canvas,
+        antialias: true
+    });
+    renderer.setSize(canvas.width, canvas.height);
+
+    camera.position.z = 150;
+
+    function render() {
+        moveRoad();
+        // console.log(self.roads)
+
+        requestAnimationFrame(render);
+        renderer.render(scene, camera);
+    }
+
+    function moveRoad() {
+        for (var i in self.roads) {
+            var road = self.roads[i];
+            road.particles = road.particles || [];
+            for (var j in road.particles) {
+                road.particles[j].position.x = road.particles[j].position.x + road._speed.x;
+                road.particles[j].position.y = road.particles[j].position.y + road._speed.y;
+                var xOver = false;
+                var yOver = false;
+                if (road._speed.x >= 0) {
+                    if (road.particles[j].position.x >= road._end.x) {
+                        xOver = true;
+                    }
+                } else {
+                    if (road.particles[j].position.x <= road._end.x) {
+                        xOver = true;
+                    }
+                }
+                if (road._speed.y >= 0) {
+                    if (road.particles[j].position.y >= road._end.y) {
+                        yOver = true;
+                    }
+                } else {
+                    if (road.particles[j].position.y <= road._end.y) {
+                        yOver = true;
+                    }
+                }
+                if (xOver && yOver) {
+                    road.particles[j].position.x = road._start.x;
+                    road.particles[j].position.y = road._start.y;
+                }
+            }
+        }
+    }
+    render();
+    // setTimeout(function(){
+    //     moveRoad();
+    // },1000)
+};
+
+TrafficDrawer.prototype.drawMap = function (time) {
+    var dataType = this.getLayer().getDataType();
+    var data = this.getLayer().getData();
+    var ctx = this.getCtx();
+    var drawOptions = this.getDrawOptions();
+    var map = this._map;
+    var mercatorProjection = map.getMapType().getProjection();
+    var mcCenter = mercatorProjection.lngLatToPoint(map.getCenter());
+    var zoom = map.getZoom();
+    var zoomUnit = Math.pow(2, 18 - zoom);
+    // console.log(mcCenter, zoomUnit)
+    this.endDrawMap();
+
+    for (var i in this.roads) {
+        var road = this.roads[i];
+        if (road.particles.length < 1) {} else {
+            for (var j in road.particles) {
+                this.scene.remove(road.particles[j]);
+            }
+            road.particles = [];
+        }
+
+        var start = road._start = {
+            x: (road.start.x - mcCenter.x) / zoomUnit,
+            y: (road.start.y - mcCenter.y) / zoomUnit
+        };
+        var end = road._end = {
+            x: (road.end.x - mcCenter.x) / zoomUnit,
+            y: (road.end.y - mcCenter.y) / zoomUnit
+        };
+        //  =
+
+        var d = road.distance = Math.sqrt(Math.pow(end.x - start.x, 2) + Math.pow(end.y - start.y, 2), 2);
+        var dx = end.x - start.x;
+        var dy = end.y - start.y;
+        road._speed = {
+            x: (end.x - start.x) / (road.speed / 16),
+            y: (end.y - start.y) / (road.speed / 16)
+        };
+        //
+        // var material = new THREE.LineBasicMaterial({
+        //     color: 0x000000,
+        //     linewidth: 100,
+        //     // transparent: true,
+        //     opacity: 0.4,
+        // });
+        //
+        // var geometry = new THREE.Geometry();
+        // geometry.vertices.push(
+        //     new THREE.Vector3( start.x, start.y, -10 ),
+        //     new THREE.Vector3( end.x, end.y, -10 ),
+        // );
+        // var line = new THREE.Line( geometry, material );
+        // this.scene.add( line );
+        //
+        var material = new THREE.SpriteMaterial({
+            map: new THREE.CanvasTexture(generateSprite()),
+            transparent: true,
+            opacity: 1.0,
+            blending: THREE.NoBlending
+        });
+
+        for (var i = 0; i < 10; i++) {
+            var particle = new THREE.Sprite(material);
+            particle.position.set(start.x + i * dx / 10, start.y + i * dy / 10, 0);
+            particle.scale.x = particle.scale.y = 30;
+            // particle.scale.x = Math.abs(dx) / 10 < 10 ? 10 : Math.abs(dx) / 10;
+            // particle.scale.y = Math.abs(dy) / 10 < 10 ? 10 : Math.abs(dy) / 10;
+            this.scene.add(particle);
+            road.particles.push(particle);
+        }
+    }
+
+    // console.log(this.roads)
+};
+
+function generateSprite() {
+
+    var canvas = document.createElement('canvas');
+    canvas.width = 16;
+    canvas.height = 16;
+
+    var context = canvas.getContext('2d');
+    var gradient = context.createRadialGradient(canvas.width / 2, canvas.height / 2, 0, canvas.width / 2, canvas.height / 2, canvas.width / 2);
+    gradient.addColorStop(0.0, 'rgba(255,255,255,1)');
+    gradient.addColorStop(0.2, 'rgba(255,255,0,0.8)');
+    gradient.addColorStop(0.4, 'rgba(64,64,0,0.4)');
+    gradient.addColorStop(0.6, 'rgba(64,64,0,0.2)');
+    gradient.addColorStop(1.0, 'rgba(0,0,0,0)');
+
+    context.fillStyle = gradient;
+    context.fillRect(0, 0, canvas.width, canvas.height);
+
+    return canvas;
+}
+"use strict";
+
+Mapv.Layer = Layer;
+window.Mapv = Mapv;
 }();

@@ -31,11 +31,15 @@ HeatmapDrawer.prototype.drawMap = function () {
 
     this._width = ctx.canvas.width;
     this._height = ctx.canvas.height;
+
     var data = this.getLayer().getData();
     this._data = data;
-    console.time('drawHeatMap');
-    this.drawHeatmap();
-    console.timeEnd('drawHeatMap');
+
+    if (this._width > 0 && this._height > 0) {
+        console.time('drawHeatMap');
+        this.drawHeatmap();
+        console.timeEnd('drawHeatMap');
+    }
 
     this.endDrawMap();
 };
@@ -103,16 +107,19 @@ util.extend(HeatmapDrawer.prototype, {
 
     radius: function (r) {
 
-        if (this.getDrawOptions().shadowBlur !== undefined) {
-            var blur = parseFloat(this.getDrawOptions().shadowBlur);
-        } else {
-            var blur = 15;
-        }
-
         // create a grayscale blurred circle image that we'll use for drawing points
         var circle = this._circle = document.createElement('canvas'),
-            ctx = circle.getContext('2d'),
-            r2 = this._r = r + blur;
+            ctx = circle.getContext('2d');
+
+        var shadowBlur = 0;
+
+        if (this.getDrawOptions().shadowBlur !== undefined) {
+            shadowBlur = parseFloat(this.getDrawOptions().shadowBlur);
+        } else {
+            shadowBlur = 0;
+        }
+
+        var r2 = this._r = r + shadowBlur;
 
         if (this.getDrawOptions().type === 'rect') {
             circle.width = circle.height = r2;
@@ -120,13 +127,24 @@ util.extend(HeatmapDrawer.prototype, {
             circle.width = circle.height = r2 * 2;
         }
 
-        var offsetDistance = 10000;
+        var offsetDistance;
+
+        if (this.getDrawOptions().shadowBlur !== undefined) {
+            ctx.shadowBlur = shadowBlur;
+            ctx.shadowColor = 'black';
+            offsetDistance = 10000;
+
+        } else {
+            offsetDistance = 0;
+
+            var grad  = ctx.createRadialGradient(r2 - offsetDistance, r2 - offsetDistance, 0, r2 - offsetDistance, r2 - offsetDistance, r);
+            /* 设定各个位置的颜色 */
+            grad.addColorStop(0, 'rgba(0, 0, 0, 1)');
+            grad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            ctx.fillStyle = grad;
+        }
 
         ctx.shadowOffsetX = ctx.shadowOffsetY = offsetDistance;
-
-        ctx.shadowBlur = blur;
-
-        ctx.shadowColor = 'black';
 
         ctx.beginPath();
         if (this.getDrawOptions().type === 'rect') {
@@ -153,8 +171,9 @@ util.extend(HeatmapDrawer.prototype, {
         // console.log(this.masker)
         // draw a grayscale heatmap by putting a blurred circle at each data point
         var dataType = this.getLayer().getDataType();
+        var max = this.getMax();
         if (dataType === 'polyline') {
-            ctx.strokeStyle = this.getDrawOptions().strokeStyle || 'rgba(0, 0, 0, 0.05)';
+            ctx.strokeStyle = this.getDrawOptions().strokeStyle || 'rgba(0, 0, 0, 0.8)';
 
             /*
             ctx.shadowOffsetX = ctx.shadowOffsetY = 0;
@@ -163,27 +182,29 @@ util.extend(HeatmapDrawer.prototype, {
             */
 
             ctx.lineWidth = this.getDrawOptions().lineWidth || 1;
+            ctx.beginPath();
             for (var i = 0, len = this._data.length; i < len; i++) {
                 p = this._data[i];
                 var geo = p.pgeo;
+                ctx.beginPath();
                 ctx.moveTo(geo[0][0], geo[0][1]);
                 for (var j = 1; j < geo.length; j++) {
                     ctx.lineTo(geo[j][0], geo[j][1]);
                 }
+                ctx.globalAlpha = Math.max(p.count / max, minOpacity === undefined ? 0.05 : minOpacity);
+                ctx.stroke();
             }
-            ctx.stroke();
 
         } else {
 
-            var boundary = this.getDrawOptions().boundary || 50;
+            var boundary = this.getDrawOptions().boundary || this._circle.width + 50;
 
             console.time('drawImageData');
             console.log('data', this._data.length, this._data);
-            var max = this.getMax();
             for (var i = 0, len = this._data.length, p; i < len; i++) {
                 p = this._data[i];
                 if (p.px < -boundary || p.py < -boundary || p.px > ctx.canvas.width + boundary || p.py > ctx.canvas.height + boundary) {
-                    continue;
+                    //continue;
                 }
                 // if (p.count < this.masker.min || p.count > this.masker.max) {
                 //     continue;
@@ -197,6 +218,7 @@ util.extend(HeatmapDrawer.prototype, {
 
         // colorize the heatmap, using opacity value of each pixel to get the right color from our gradient
         // console.log( this._width, this._height)
+
         var colored = ctx.getImageData(0, 0, this._width, this._height);
         console.time('colorize');
         this.colorize(colored.data, this.dataRange.getGradient());
